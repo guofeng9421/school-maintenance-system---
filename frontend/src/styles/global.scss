@@ -1,0 +1,33 @@
+/* 全局样式重置 */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* 根元素基础样式：高度撑满 + 中文字体栈 */
+html, body, #app {
+  height: 100%;
+  font-family: 'Helvetica Neue', Helvetica, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', Arial, sans-serif;
+}
+
+/* 覆盖 Element UI 水平菜单底部边框 */
+.el-menu--horizontal {
+  border-bottom: none !important;
+}
+
+/* 页面容器：统一内边距 + 高度撑满 + 内容溢出时滚动 */
+.page-container {
+  padding: 20px;
+  height: 100%;
+  overflow: auto;
+}
+
+/* 筛选栏：弹性布局 + 自动换行 + 间距 */
+.filter-bar {
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
