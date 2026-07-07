@@ -77,6 +77,14 @@ const router = new VueRouter({
   routes
 })
 
+// 覆盖 push 方法，捕获重复导航错误
+const originalPush = VueRouter.prototype.push
+VueRouter.prototype.push = function push(location) {
+  return originalPush.call(this, location).catch(err => {
+    if (err && err.name !== 'NavigationDuplicated') throw err
+  })
+}
+
 // 全局路由守卫：未登录时跳转到登录页
 router.beforeEach((to, from, next) => {
   const token = localStorage.getItem('token')

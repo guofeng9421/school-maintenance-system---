@@ -69,7 +69,7 @@
     </el-card>
 
     <el-dialog title="开始处理" :visible.sync="showHandlerDialog" width="400px">
-      <el-form :model="handlerForm" label-width="80px">
+      <el-form :model="handlerForm" label-width="80px" @submit.native.prevent="confirmStartProcessing">
         <el-form-item label="处理人">
           <el-input v-model="handlerForm.handler_name" placeholder="请输入处理人姓名" />
         </el-form-item>
@@ -149,7 +149,6 @@ export default {
         const res = await this.$API.maintenanceApi.getDetail(
           this.$route.params.id
         );
-        console.log(res);
         if (res.code === 200) {
           Object.assign(this.record, res.data);
         }

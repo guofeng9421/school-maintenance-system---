@@ -12,9 +12,9 @@
         <el-form-item>
           <el-button type="primary" :loading="loading" style="width: 100%" @click="handleLogin">登 录</el-button>
         </el-form-item>
-        <div class="login-footer">
+        <!-- <div class="login-footer">
           <router-link to="/register">注册账号</router-link>
-        </div>
+        </div> -->
       </el-form>
     </div>
   </div>

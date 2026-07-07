@@ -111,6 +111,7 @@ export default {
         model_element_id: "",
         model_element_name: "",
         model_name: "",
+        handler_name: "",
         status: "pending",
         images: [], // 图片URL数组，提交后由后端返回
       },
@@ -144,30 +145,34 @@ export default {
     }
   },
   mounted() {
-    // 从 BIM 页面跳转过来时，读取 query 参数自动填充表单
-    if (this.$route.query.model_element_id) {
-      this.form.model_element_id = this.$route.query.model_element_id;
-      this.form.model_element_name = this.$route.query.model_element_name;
-      this.form.floor = this.$route.query.floor || "";
-      this.form.room = this.$route.query.room || "";
-      this.form.model_name = this.$route.query.model_name || "";
-    }
-    // 编辑模式下加载已有数据
+    // 首次加载：编辑模式下拉取详情
     if (this.isEdit) {
       this.fetchDetail();
     }
-  },
-  activated() {
-    // 缓存组件返回时，读取 query 参数更新构件信息
+    // 从 BIM 页面跳转过来时，读取 query 参数自动填充表单
     if (this.$route.query.model_element_id) {
-      this.form.model_element_id = this.$route.query.model_element_id;
-      this.form.model_element_name = this.$route.query.model_element_name;
-      this.form.floor = this.$route.query.floor || "";
-      this.form.room = this.$route.query.room || "";
-      this.form.model_name = this.$route.query.model_name || "";
+      this.fillComponentFromQuery(this.$route.query);
+    }
+  },
+  watch: {
+    $route(to, from) {
+      // 从 BIM 页面返回，读取 query 参数更新构件信息，跳过 fetchDetail
+      if (to.query.model_element_id) {
+        this.fillComponentFromQuery(to.query);
+      } else if (to.params.id && (!from || to.params.id !== from.params.id)) {
+        this.fetchDetail();
+      }
     }
   },
   methods: {
+    // 从 query 参数填充构件信息
+    fillComponentFromQuery(query) {
+      this.form.model_element_id = query.model_element_id;
+      this.form.model_element_name = query.model_element_name;
+      this.form.floor = query.floor || "";
+      this.form.room = query.room || "";
+      this.form.model_name = query.model_name || "";
+    },
     // 编辑模式：从后端获取已有报修记录数据并填充表单
     async fetchDetail() {
       const res = await this.$API.maintenanceApi.getDetail(

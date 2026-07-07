@@ -195,7 +195,6 @@ export default {
     async fetchModels() {
       try {
         const res = await this.$API.bimfaceApi.getModels();
-        console.log("获取模型列表:", res);
         if (res.code === 200) {
           // 过滤掉没有token的模型，添加加载状态字段
           this.modelList = res.data

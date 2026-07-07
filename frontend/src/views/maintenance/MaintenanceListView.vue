@@ -35,18 +35,18 @@
       <el-table-column prop="id" label="编号" width="130" />
       <el-table-column prop="title" label="报修标题" min-width="160" show-overflow-tooltip />
       <el-table-column prop="location" label="位置" min-width="160" show-overflow-tooltip />
-      <el-table-column prop="building" label="楼栋" width="100" />
+      <el-table-column prop="building" label="楼栋" width="90" />
       <el-table-column prop="category" label="分类" width="90">
         <template slot-scope="{ row }">{{ categoryMap[row.category] }}</template>
-      </el-table-column>
-      <el-table-column prop="priority" label="优先级" width="90">
-        <template slot-scope="{ row }">
-          <el-tag :type="priorityType[row.priority]">{{ priorityMap[row.priority] }}</el-tag>
-        </template>
       </el-table-column>
       <el-table-column prop="status" label="状态" width="90">
         <template slot-scope="{ row }">
           <el-tag :type="statusType[row.status]">{{ statusMap[row.status]}}</el-tag>
+        </template>
+      </el-table-column>
+      <el-table-column prop="priority" label="优先级" width="90">
+        <template slot-scope="{ row }">
+          <el-tag :type="priorityType[row.priority]">{{ priorityMap[row.priority] }}</el-tag>
         </template>
       </el-table-column>
       <el-table-column prop="reporter_name" label="报修人" width="90" />
@@ -128,7 +128,6 @@ export default {
       this.loading = true;
       try {
         const res = await this.$API.maintenanceApi.getList(this.query);
-        console.log(res.data.list);
         if (res.code === 200) {
           this.list = res.data.list;
           this.total = res.data.total;
