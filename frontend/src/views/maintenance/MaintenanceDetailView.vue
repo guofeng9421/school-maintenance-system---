@@ -59,7 +59,7 @@
           <el-card shadow="never">
             <div slot="header"><span>快速操作</span></div>
             <div style="display:flex;flex-direction:column;gap:8px;">
-              <el-button v-if="record.status === 'pending'" type="warning" @click="changeStatus('processing')">开始处理</el-button>
+              <el-button v-if="record.status === 'pending'" type="warning" @click="showHandlerDialog = true">开始处理</el-button>
               <el-button v-if="record.status === 'processing'" type="success" @click="changeStatus('completed')">标记完成</el-button>
               <el-button v-if="record.status === 'pending'" type="danger" @click="changeStatus('rejected')">驳回</el-button>
             </div>
@@ -67,6 +67,18 @@
         </el-col>
       </el-row>
     </el-card>
+
+    <el-dialog title="开始处理" :visible.sync="showHandlerDialog" width="400px">
+      <el-form :model="handlerForm" label-width="80px">
+        <el-form-item label="处理人">
+          <el-input v-model="handlerForm.handler_name" placeholder="请输入处理人姓名" />
+        </el-form-item>
+      </el-form>
+      <div slot="footer">
+        <el-button @click="showHandlerDialog = false">取消</el-button>
+        <el-button type="primary" @click="confirmStartProcessing">确定</el-button>
+      </div>
+    </el-dialog>
   </div>
 </template>
 
@@ -102,13 +114,17 @@ export default {
         completed_at: "",
         model_element_id: "",
         model_element_name: "",
-        images: [], // 图片URL数组
+        images: [],
       },
       categoryMap,
       priorityMap,
       statusMap,
       statusType,
       priorityType,
+      showHandlerDialog: false,
+      handlerForm: {
+        handler_name: "",
+      },
     };
   },
   computed: {
@@ -120,6 +136,9 @@ export default {
     },
   },
   mounted() {
+    this.fetchDetail();
+  },
+  activated() {
     this.fetchDetail();
   },
   methods: {
@@ -144,29 +163,22 @@ export default {
         completed: "已完成",
         rejected: "已驳回",
       };
-      if (status === "processing") {
-        this.$prompt("请输入处理人姓名", "分配处理人", {
-          confirmButtonText: "确定",
-          cancelButtonText: "取消",
-          inputValidator: (val) =>
-            val && val.trim() ? true : "处理人不能为空",
-          inputPlaceholder: "请输入处理人姓名",
-        })
-          .then(async ({ value }) => {
-            await this.$API.maintenanceApi.update(this.$route.params.id, {
-              status,
-              handler_name: value.trim(),
-            });
-            this.$message.success(
-              `已标记为${statusLabel[status]}，处理人：${value.trim()}`
-            );
-            this.fetchDetail();
-          })
-          .catch(() => {});
-        return;
-      }
       await this.$API.maintenanceApi.update(this.$route.params.id, { status });
       this.$message.success(`已标记为${statusLabel[status]}`);
+      this.fetchDetail();
+    },
+    async confirmStartProcessing() {
+      if (!this.handlerForm.handler_name.trim()) {
+        this.$message.warning("请输入处理人姓名");
+        return;
+      }
+      const res = await this.$API.maintenanceApi.update(this.$route.params.id, {
+        status: "processing",
+        handler_name: this.handlerForm.handler_name,
+      });
+      this.$message.success(res.message);
+      this.showHandlerDialog = false;
+      this.handlerForm.handler_name = "";
       this.fetchDetail();
     },
   },

@@ -767,10 +767,12 @@ export default {
       }
     },
 
-    // 跳转到新建报修页面，传递构件信息
+    // 跳转到报修页面，传递构件信息
     goCreateRecord() {
+      const from = this.$route.query.from;
+      const recordId = this.$route.query.record_id;
       this.$router.push({
-        path: "/maintenance/create",
+        path: from === 'edit' ? `/maintenance/edit/${recordId}` : '/maintenance/create',
         query: {
           model_element_id: this.selectedElement.id,
           model_element_name: this.selectedElement.name,

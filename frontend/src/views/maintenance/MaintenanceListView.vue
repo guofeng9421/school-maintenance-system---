@@ -71,8 +71,8 @@
       </el-table-column>
       <el-table-column label="操作" width="180" fixed="right">
         <template slot-scope="{ row }">
-          <el-button type="text" size="small" @click="$router.push('/maintenance/detail/' + row.id)">详情</el-button>
-          <el-button type="text" size="small" @click="$router.push('/maintenance/edit/' + row.id)">编辑</el-button>
+          <el-button type="text" size="small" @click="$router.push(`/maintenance/detail/${row.id}`)">详情</el-button>
+          <el-button type="text" size="small" @click="$router.push(`/maintenance/edit/${row.id}`)">编辑</el-button>
           <el-popconfirm title="确认删除?" @confirm="handleDelete(row.id)">
             <el-button slot="reference" type="text" size="small" style="color:#f56c6c;">删除</el-button>
           </el-popconfirm>

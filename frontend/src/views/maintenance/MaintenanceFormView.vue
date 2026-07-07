@@ -63,7 +63,7 @@
           <el-col :span="10">
             <el-form-item label="构件名称">
               <el-input v-model="form.model_element_name" placeholder="点击BIM模型选择构件或手动输入" readonly>
-                <el-button slot="append" @click="$router.push('/bim')">选择构件</el-button>
+                <el-button slot="append" @click="goSelectComponent">选择构件</el-button>
               </el-input>
             </el-form-item>
           </el-col>
@@ -141,14 +141,7 @@ export default {
     // 是否已选择BIM构件（控制其他字段是否可编辑）
     hasComponent() {
       return !!this.form.model_element_id;
-    },
-  },
-  watch: {
-    "$route.params.id"(newId) {
-      if (newId && this.isEdit) {
-        this.fetchDetail();
-      }
-    },
+    }
   },
   mounted() {
     // 从 BIM 页面跳转过来时，读取 query 参数自动填充表单
@@ -164,13 +157,22 @@ export default {
       this.fetchDetail();
     }
   },
+  activated() {
+    // 缓存组件返回时，读取 query 参数更新构件信息
+    if (this.$route.query.model_element_id) {
+      this.form.model_element_id = this.$route.query.model_element_id;
+      this.form.model_element_name = this.$route.query.model_element_name;
+      this.form.floor = this.$route.query.floor || "";
+      this.form.room = this.$route.query.room || "";
+      this.form.model_name = this.$route.query.model_name || "";
+    }
+  },
   methods: {
     // 编辑模式：从后端获取已有报修记录数据并填充表单
     async fetchDetail() {
       const res = await this.$API.maintenanceApi.getDetail(
         this.$route.params.id
       );
-      console.log(res);
       if (res.code === 200) {
         Object.assign(this.form, {
           title: res.data.title,
@@ -194,6 +196,15 @@ export default {
           }));
         }
       }
+    },
+    // 跳转到BIM页面选择构件，传递来源信息
+    goSelectComponent() {
+      const query = {};
+      if (this.isEdit) {
+        query.from = 'edit';
+        query.record_id = this.$route.params.id;
+      }
+      this.$router.push({ path: '/bim', query });
     },
     // 文件选择变更回调：同步更新fileList
     handleFileChange(file, list) {

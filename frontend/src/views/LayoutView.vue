@@ -54,8 +54,9 @@
         </el-header>
         <el-main class="layout-main">
           <keep-alive>
-            <router-view />
+            <router-view v-if="this.$route.params.id"/>
           </keep-alive>
+          <router-view v-if="!this.$route.params.id"/>
         </el-main>
       </el-container>
     </el-container>
@@ -69,7 +70,7 @@ import { roleMap } from "../config/constants";
 export default {
   name: "LayoutView",
   data() {
-    return { roleMap }; // 角色名称映射表
+    return { roleMap };
   },
   computed: {
     // 当前激活的菜单项：维修相关页面统一高亮"维修记录"菜单
