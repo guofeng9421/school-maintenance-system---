@@ -268,7 +268,6 @@ export default {
                 submitData
               )
             : await this.$API.maintenanceApi.create(submitData);
-          console.log(res);
           if (res.code === 200) {
             this.$message.success(res.message);
             this.$router.push("/maintenance");

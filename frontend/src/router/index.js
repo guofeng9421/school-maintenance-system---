@@ -85,12 +85,20 @@ VueRouter.prototype.push = function push(location) {
   })
 }
 
-// 全局路由守卫：未登录时跳转到登录页
+// 全局路由守卫：未登录时跳转到登录页，管理员页面权限校验
 router.beforeEach((to, from, next) => {
   const token = localStorage.getItem('token')
   // 登录页和注册页放行，其他页面需要 token
   if (to.path !== '/login' && to.path !== '/register' && !token) {
     next('/login')
+  } else if (to.meta.requiresAdmin) {
+    // 管理员页面：检查用户角色
+    const user = JSON.parse(localStorage.getItem('user') || 'null')
+    if (user && user.role === 'admin') {
+      next()
+    } else {
+      next('/dashboard')
+    }
   } else {
     next()
   }
