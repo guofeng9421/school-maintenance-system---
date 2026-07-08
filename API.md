@@ -1,21 +1,48 @@
 # 学校维修管理系统 - 后端接口文档
 
-> 基础路径：`/api`（前端 devServer 代理到 `http://localhost:8080`）
+> 基础路径：`/api`
+> 后端端口：`3001`
 > 认证方式：请求头 `Authorization: Bearer <token>`
 
 ---
 
 ## 一、认证模块 (auth)
 
-### 1. 登录
+### 1. 用户登录
 - **路径**：`POST /api/auth/login`
+- **需要认证**：否
 - **参数**：`{ username: string, password: string }`
-- **返回**：`{ code: 200, data: { token: string, user: object }, message: "登录成功" }`
+- **返回**：
+```json
+{
+  "code": 200,
+  "data": {
+    "token": "jwt_token_string",
+    "user": {
+      "id": 1,
+      "username": "admin",
+      "real_name": "系统管理员",
+      "role": "admin",
+      "phone": ""
+    }
+  }
+}
+```
 
-### 2. 注册
+### 2. 用户注册
 - **路径**：`POST /api/auth/register`
-- **参数**：`{ username: string, password: string, role?: string }`
-- **返回**：`{ code: 200, message: "注册成功" }`
+- **需要认证**：否
+- **参数**：
+
+| 参数 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| username | string | 是 | 用户名 |
+| password | string | 是 | 密码 |
+| real_name | string | 否 | 真实姓名 |
+| role | string | 否 | 角色，默认 teacher |
+| phone | string | 否 | 手机号 |
+
+- **返回**：`{ code: 200, message: "注册成功", data: { id: number } }`
 
 ### 3. 获取当前用户信息
 - **路径**：`GET /api/auth/userinfo`
@@ -25,33 +52,35 @@
 ### 4. 获取所有用户列表
 - **路径**：`GET /api/auth/users`
 - **需要认证**：是
-- **返回**：`{ code: 200, data: [user, ...] }`
+- **返回**：`{ code: 200, data: [{ id, username, real_name, role, phone, created_at }, ...] }`
 
-### 5. 获取维修师傅列表
-- **路径**：`GET /api/auth/workers`
-- **返回**：`[user, ...]`
-
-### 6. 获取用户数量
-- **路径**：`GET /api/auth/count`
-- **返回**：`{ count: number }`
-
-### 7. 根据ID查询用户
-- **路径**：`GET /api/auth/{userId}`
-- **返回**：`User`
-
-### 8. 新增用户
+### 5. 新增用户
 - **路径**：`POST /api/auth`
-- **参数**：`User`
-- **返回**：`User`
+- **需要认证**：是
+- **参数**：
 
-### 9. 更新用户
-- **路径**：`PUT /api/auth/{userId}`
-- **参数**：`User`
-- **返回**：`User`
+| 参数 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| username | string | 是 | 用户名 |
+| password | string | 是 | 密码 |
+| real_name | string | 否 | 真实姓名 |
+| role | string | 否 | 角色，默认 teacher |
+| phone | string | 否 | 手机号 |
 
-### 10. 删除用户
-- **路径**：`DELETE /api/auth/{userId}`
-- **返回**：`boolean`
+- **返回**：`{ code: 200, message: "新增成功", data: { id: number } }`
+
+### 6. 更新用户信息
+- **路径**：`PUT /api/auth/:id`
+- **需要认证**：是
+- **参数**：`:id` 用户ID + 需要更新的字段
+- **可更新字段**：username, password（自动加密）, real_name, role, phone
+- **返回**：`{ code: 200, message: "更新成功" }`
+
+### 7. 删除用户
+- **路径**：`DELETE /api/auth/:id`
+- **需要认证**：是
+- **参数**：`:id` 用户ID
+- **返回**：`{ code: 200, message: "删除成功" }`
 
 ---
 
@@ -78,7 +107,7 @@
   "data": {
     "list": [
       {
-        "id": "R2026063012345",
+        "id": 1,
         "title": "教室灯管损坏",
         "description": "走廊灯管闪烁",
         "location": "教学楼A 3层 301",
@@ -122,7 +151,7 @@
 | 参数 | 类型 | 必填 | 说明 |
 |------|------|------|------|
 | title | string | 是 | 报修标题 |
-| location | string | 否 | 报修位置（可不传，由building/floor/room拼接） |
+| location | string | 否 | 报修位置 |
 | building | string | 否 | 楼栋 |
 | floor | string | 否 | 楼层 |
 | room | string | 否 | 房间号 |
@@ -133,10 +162,8 @@
 | model_element_id | string | 否 | BIM构件ID |
 | model_element_name | string | 否 | BIM构件名称 |
 | model_name | string | 否 | 所属模型名称 |
-| reporter_name | string | 否 | 报修人姓名 |
-| request_user_id | number | 否 | 报修人用户ID |
 
-- **返回**：`{ code: 200, message: "报修成功", data: { id: "R20260630..." } }`
+- **返回**：`{ code: 200, message: "报修成功", data: { id: number } }`
 
 ### 4. 更新记录
 - **路径**：`PUT /api/maintenance/update/:id`
@@ -178,7 +205,7 @@
       { "priority": "medium", "count": 50 }
     ],
     "recent": [
-      { "id": "...", "title": "...", "status": "...", "priority": "...", "created_at": "..." }
+      { "id": 1, "title": "...", "status": "...", "priority": "...", "created_at": "..." }
     ]
   }
 }
@@ -198,22 +225,25 @@
 
 ### 1. 获取 Access Token
 - **路径**：`GET /api/bimface/token`
+- **需要认证**：是
 - **返回**：`{ code: 200, data: { token: string } }`
 
 ### 2. 获取模型 View Token
 - **路径**：`GET /api/bimface/view-token/:fileId`
+- **需要认证**：是
 - **参数**：`:fileId` BIMface文件ID
 - **返回**：`{ code: 200, data: { viewToken: string } }`
 
 ### 3. 获取模型列表
 - **路径**：`GET /api/bimface/models`
+- **需要认证**：是
 - **返回**：
 ```json
 {
   "code": 200,
   "data": [
     {
-      "id": "1",
+      "id": 1,
       "name": "教学楼A栋",
       "token": "viewToken字符串",
       "description": "",
@@ -226,13 +256,11 @@
 
 ---
 
-## 四、上传模块 (upload)
+## 四、其他
 
-### 通用上传接口
-- **路径**：`POST /api/upload`
-- **Content-Type**：`multipart/form-data`
-- **参数**：`images` 文件字段
-- **返回**：`{ code: 200, data: ["/uploads/xxx.jpg", ...] }`
+### 健康检查
+- **路径**：`GET /api/health`
+- **返回**：`{ code: 200, message: "服务运行正常" }`
 
 ---
 
@@ -241,7 +269,47 @@
 ```json
 {
   "code": 200,       // 200=成功, 400=参数错误, 401=未认证, 404=不存在, 500=服务器错误
-  "message": "...",  // 错误信息（失败时）
+  "message": "...",  // 提示信息
   "data": ...        // 业务数据（成功时）
 }
 ```
+
+---
+
+## 数据模型
+
+### 用户 (users)
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| id | number | 用户ID（自增） |
+| username | string | 用户名 |
+| password | string | 密码（bcrypt加密） |
+| real_name | string | 真实姓名 |
+| role | string | 角色：admin/teacher/student/maintenance |
+| phone | string | 手机号 |
+| created_at | string | 创建时间（ISO 8601） |
+
+### 维修记录 (maintenance_records)
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| id | number | 记录ID（自增） |
+| title | string | 报修标题 |
+| description | string | 问题描述 |
+| location | string | 报修位置 |
+| building | string | 楼栋 |
+| floor | string | 楼层 |
+| room | string | 房间号 |
+| category | string | 分类 |
+| priority | string | 优先级 |
+| status | string | 状态：pending/processing/completed/rejected |
+| reporter_id | number | 报修人ID |
+| reporter_name | string | 报修人姓名 |
+| handler_id | string | 处理人ID |
+| handler_name | string | 处理人姓名 |
+| model_element_id | string | BIM构件ID |
+| model_element_name | string | BIM构件名称 |
+| model_name | string | 所属模型名称 |
+| images | string[] | 图片URL数组 |
+| created_at | string | 创建时间 |
+| updated_at | string | 更新时间 |
+| completed_at | string | 完成时间 |
