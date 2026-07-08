@@ -126,10 +126,18 @@ export default {
             const data = {username: this.form.username, real_name: this.form.real_name, phone: this.form.phone, role: this.form.role }
             if (this.form.password) data.password = this.form.password
             const res = await this.$API.authApi.updateUser(this.editId, data)
-            this.$message.success(res.message)
+            if (res.code === 200) {
+              this.$message.success(res.message)
+            } else {
+              this.$message.error(res.message)
+            }
           } else {
             const res = await this.$API.authApi.addUser(this.form)
-            this.$message.success(res.message)
+            if (res.code === 200) {
+              this.$message.success(res.message)
+            } else {
+              this.$message.error(res.message)
+            } 
           }
           this.dialogVisible = false
           this.fetchUsers()
@@ -142,7 +150,11 @@ export default {
     },
     async handleDelete(id) {
      const res = await this.$API.authApi.deleteUser(id)
-      this.$message.success(res.message)
+     if (res.code === 200) {
+       this.$message.success(res.message)
+     } else {
+       this.$message.error(res.message)
+     }
       this.fetchUsers()
     }
   }

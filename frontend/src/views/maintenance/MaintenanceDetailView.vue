@@ -5,7 +5,7 @@
         <span style="font-size:18px;font-weight:600;">报修详情 #{{ record.id }}</span>
         <div>
           <el-button size="small" @click="$router.back()">返回列表</el-button>
-          <el-button size="small" type="primary" @click="$router.push('/maintenance/edit/' + record.id)">编辑</el-button>
+          <el-button size="small" type="primary" @click="$router.push(`/maintenance/edit/${record.id}`)">编辑</el-button>
         </div>
       </div>
 
@@ -162,8 +162,12 @@ export default {
         completed: "已完成",
         rejected: "已驳回",
       };
-      await this.$API.maintenanceApi.update(this.$route.params.id, { status });
-      this.$message.success(`已标记为${statusLabel[status]}`);
+      const res = await this.$API.maintenanceApi.update(this.$route.params.id, {
+        status,
+      });
+      if (res.code === 200) {
+        this.$message.success(`已标记为${statusLabel[status]}`);
+      }
       this.fetchDetail();
     },
     async confirmStartProcessing() {
@@ -175,7 +179,9 @@ export default {
         status: "processing",
         handler_name: this.handlerForm.handler_name,
       });
-      this.$message.success(res.message);
+      if (res.code === 200) {
+        this.$message.success(res.message);
+      }
       this.showHandlerDialog = false;
       this.handlerForm.handler_name = "";
       this.fetchDetail();

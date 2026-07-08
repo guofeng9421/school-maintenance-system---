@@ -47,13 +47,13 @@ export default {
             password: this.form.password
           })
           if (res.code === 200) {
-            this.$message.success('登录成功')
+            this.$message.success(res.message)
             this.$router.push('/')
           } else {
             this.$message.error(res.message)
           }
         } catch (e) {
-          this.$message.error('登录失败')
+          this.$message.error(e.message)
         } finally {
           this.loading = false
         }
