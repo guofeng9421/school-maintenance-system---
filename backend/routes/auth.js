@@ -1,7 +1,7 @@
 const express = require('express')
 const bcrypt = require('bcryptjs')
 const jwt = require('jsonwebtoken')
-const { query, findById, insert } = require('../config/db')
+const { query, findById, insert, update, remove } = require('../config/db')
 const jwtConfig = require('../config/jwt')
 const { authMiddleware } = require('../middleware/auth')
 
@@ -83,10 +83,64 @@ router.get('/userinfo', authMiddleware, async (req, res) => {
 })
 
 // GET /api/auth/users - 获取所有用户列表（需登录）
-router.get('/', authMiddleware, async (req, res) => {
+router.get('/users', authMiddleware, async (req, res) => {
   try {
     const users = query('users').map(({ password, ...u }) => u) // 排除所有用户的密码
     res.json({ code: 200, data: users })
+  } catch (err) {
+    res.json({ code: 500, message: err.message })
+  }
+})
+
+// POST /api/auth - 新增用户（管理员）
+router.post('/', authMiddleware, async (req, res) => {
+  try {
+    const { username, password, real_name, role, phone } = req.body
+    const exists = query('users', u => u.username === username)
+    if (exists.length > 0) {
+      return res.json({ code: 400, message: '用户名已存在' })
+    }
+    const hashedPassword = await bcrypt.hash(password, 10)
+    const user = insert('users', {
+      username,
+      password: hashedPassword,
+      real_name,
+      role: role || 'teacher',
+      phone: phone || ''
+    })
+    res.json({ code: 200, message: '新增成功', data: { id: user.id } })
+  } catch (err) {
+    res.json({ code: 500, message: err.message })
+  }
+})
+
+// PUT /api/auth/:id - 更新用户信息
+router.put('/:id', authMiddleware, async (req, res) => {
+  try {
+    const id = parseInt(req.params.id)
+    const user = findById('users', id)
+    if (!user) return res.json({ code: 404, message: '用户不存在' })
+
+    const { username, password, real_name, role, phone } = req.body
+    const updates = {}
+    if (username !== undefined) updates.username = username
+    if (password) updates.password = await bcrypt.hash(password, 10)
+    if (real_name !== undefined) updates.real_name = real_name
+    if (role !== undefined) updates.role = role
+    if (phone !== undefined) updates.phone = phone
+
+    update('users', id, updates)
+    res.json({ code: 200, message: '更新成功' })
+  } catch (err) {
+    res.json({ code: 500, message: err.message })
+  }
+})
+
+// DELETE /api/auth/:id - 删除用户
+router.delete('/:id', authMiddleware, async (req, res) => {
+  try {
+    remove('users', parseInt(req.params.id))
+    res.json({ code: 200, message: '删除成功' })
   } catch (err) {
     res.json({ code: 500, message: err.message })
   }
