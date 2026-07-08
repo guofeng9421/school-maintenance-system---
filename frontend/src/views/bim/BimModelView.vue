@@ -441,7 +441,6 @@ export default {
                     room: roomName,
                     modelName: matchedModel ? matchedModel.name : "",
                   };
-                  console.log(self.selectedElement);
                   self.activeTab = "element";
                 });
               } else {
@@ -452,7 +451,6 @@ export default {
                   room: roomName,
                   modelName: matchedModel ? matchedModel.name : "",
                 };
-                console.log(self.selectedElement);
                 self.activeTab = "element";
               }
 
@@ -757,12 +755,11 @@ export default {
         const res = await this.$API.maintenanceApi.getByElement(
           model_element_id
         );
-        console.log("查询构件关联维修记录:", res);
         if (res.code === 200) {
           this.elementRecords = res.data;
         }
       } catch (e) {
-        console.error(e);
+        this.$message.error(e)
       }
     },
 
@@ -771,7 +768,10 @@ export default {
       const from = this.$route.query.from;
       const recordId = this.$route.query.record_id;
       this.$router.push({
-        path: from === 'edit' ? `/maintenance/edit/${recordId}` : '/maintenance/create',
+        path:
+          from === "edit"
+            ? `/maintenance/edit/${recordId}`
+            : "/maintenance/create",
         query: {
           model_element_id: this.selectedElement.id,
           model_element_name: this.selectedElement.name,
