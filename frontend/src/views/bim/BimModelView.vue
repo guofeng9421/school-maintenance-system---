@@ -50,7 +50,7 @@
                   <el-descriptions-item label="所属模型">{{ selectedElement.modelName }}</el-descriptions-item>
                 </el-descriptions>
                 <el-button type="primary" size="small" style="margin-top: 12px; width: 100%;" @click="goCreateRecord">
-                  <i class="el-icon-plus"></i> 为此构件报修
+                  <i class="el-icon-plus"></i> 为此构件维修
                 </el-button>
               </div>
               <el-empty v-else description="点击模型中的构件查看信息" :image-size="80" />
@@ -109,7 +109,7 @@ export default {
       sharedApp: null,
       sharedViewer: null,
       modelList: [],
-      selectedElement: { id: "", name: "", floor: "", room: "", modelName: "" },
+      selectedElement: { id: "", name: "", floor: "", room: "", modelName: "", familyType: "" },
       elementRecords: [],
       floorData: [],
       allFloorData: [],
@@ -195,6 +195,7 @@ export default {
     async fetchModels() {
       try {
         const res = await this.$API.bimfaceApi.getModels();
+        console.log("获取模型列表:", res);
         if (res.code === 200) {
           // 过滤掉没有token的模型，添加加载状态字段
           this.modelList = res.data
@@ -427,18 +428,18 @@ export default {
               const matchedModel =
                 self.modelList[modelIndex] ||
                 self.modelList.find((m) => m.loaded);
-              const floorName = floor
-                ? floor.name || floor.actualName
-                : "自动识别";
+              const floorName = floor? floor.name || floor.actualName : "自动识别";
               const room = self.findRoomInFloor(floor, elementId);
-              const roomName = room ? room.name || room.actualName : "未知房间";
+              // const roomName = room ? room.name || room.actualName : "未知房间";
+              const familyType = self.findFamilyType(floor, elementId);
+              const familyTypeName = familyType || "";
               if (model.getComponentNameById) {
                 model.getComponentNameById(elementId, (name) => {
                   self.selectedElement = {
                     id: id,
                     name: name || "构件#" + id,
                     floor: floorName,
-                    room: roomName,
+                    room: familyTypeName,
                     modelName: matchedModel ? matchedModel.name : "",
                   };
                   self.activeTab = "element";
@@ -448,7 +449,7 @@ export default {
                   id: id,
                   name: "构件#" + id,
                   floor: floorName,
-                  room: roomName,
+                  room: familyTypeName,
                   modelName: matchedModel ? matchedModel.name : "",
                 };
                 self.activeTab = "element";
@@ -537,6 +538,25 @@ export default {
       return null;
     },
 
+    // 在楼层内递归查找构件所属的族类型名称（如"1500 x 2400mm"）
+    findFamilyType(floor, elementId) {
+      if (!floor || !floor.items) return null;
+      const id = String(elementId);
+      for (const item of floor.items) {
+        if (item.type === "familyType") {
+          const ids = this.collectElementIds(item);
+          if (ids.some((i) => String(i) === id)) {
+            return item.name || item.actualName;
+          }
+        }
+        if (item.items && item.items.length > 0) {
+          const result = this.findFamilyType(item, id);
+          if (result) return result;
+        }
+      }
+      return null;
+    },
+
     // ========================= 点击交互 =========================
 
     // 点击模型中的构件时触发：高亮选中 + 缩放聚焦 + 填充楼层下拉框
@@ -576,6 +596,7 @@ export default {
           self.floorData = tree;
           self.currentFloorModel = model;
           const floor = self.findFloorInTree(tree, objectId);
+          console.log("点击构件所属楼层:", floor,tree);
           if (floor) {
             self.selectFloorData = floor.actualName;
           }
@@ -586,13 +607,17 @@ export default {
             self.modelList[modelIndex] || self.modelList.find((m) => m.loaded);
           const floorName = floor ? floor.name || floor.actualName : "自动识别";
           const room = self.findRoomInFloor(floor, objectId);
+          console.log("点击构件所属房间:", room);
           const roomName = room ? room.name || room.actualName : "未知房间";
+          const familyType = self.findFamilyType(floor, objectId);
+          console.log("点击构件所属族类型:", familyType);
+          const familyTypeName = familyType || "";
           const applyElementInfo = (name) => {
             self.selectedElement = {
               id: String(objectId),
               name: name || "构件#" + objectId,
               floor: floorName,
-              room: roomName,
+              room: familyTypeName,
               modelName: matchedModel ? matchedModel.name : "",
             };
             self.fetchElementRecords(self.selectedElement.id);
@@ -686,6 +711,7 @@ export default {
         floor: "",
         room: "",
         modelName: "",
+        familyType: "",
       };
       this.elementRecords = [];
     },
@@ -759,11 +785,11 @@ export default {
           this.elementRecords = res.data;
         }
       } catch (e) {
-        this.$message.error(e)
+        this.$message.error(e);
       }
     },
 
-    // 跳转到报修页面，传递构件信息
+    // 跳转到维修页面，传递构件信息
     goCreateRecord() {
       const from = this.$route.query.from;
       const recordId = this.$route.query.record_id;
@@ -778,6 +804,7 @@ export default {
           floor: this.selectedElement.floor,
           room: this.selectedElement.room,
           model_name: this.selectedElement.modelName,
+          family_type: this.selectedElement.familyType,
         },
       });
     },

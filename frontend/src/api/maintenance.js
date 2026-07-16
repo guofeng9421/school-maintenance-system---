@@ -7,8 +7,14 @@ export const getList = (params) => request.get('/maintenance/list', { params })
 // 获取维修记录详情
 export const getDetail = (id) => request.get(`/maintenance/detail/${id}`)
 
-// 新建报修
+// 新建维修
 export const create = (data) => request.post('/maintenance/create', data)
+
+// 维修分类
+export const getRepair = () => request.get('/category/repair');
+
+// 维修子类
+export const getRepairSub = repairCategoryId => request.get(`/category/repair/sub/${repairCategoryId}`);
 
 // 更新维修记录
 export const update = (id, data) => request.put(`/maintenance/update/${id}`, data)

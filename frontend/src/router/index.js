@@ -45,13 +45,13 @@ const routes = [
         path: 'maintenance/create',
         name: 'MaintenanceCreate',
         component: () => import('../views/maintenance/MaintenanceFormView.vue'),
-        meta: { title: '新建报修' }
+        meta: { title: '新建维修' }
       },
       {
         path: 'maintenance/edit/:id',
         name: 'MaintenanceEdit',
         component: () => import('../views/maintenance/MaintenanceFormView.vue'),
-        meta: { title: '编辑报修' }
+        meta: { title: '编辑维修' }
       },
       {
         path: 'maintenance/detail/:id',

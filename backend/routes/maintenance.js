@@ -100,22 +100,25 @@ router.post('/create', authMiddleware, async (req, res) => {
   try {
     const {
       title, description, location, building, floor, room,
-      category, priority, model_element_id, model_element_name, model_name, images
+      category, priority, model_element_id, model_element_name, model_name, images,
+      repair_start_date, repair_end_date
     } = req.body
     const record = insert('maintenance_records', {
       title, description, location, building, floor, room,
       category, priority: priority || 'medium',
-      status: 'pending',                     // 新记录默认状态：待处理
-      reporter_id: req.user.id,              // 记录提交人
+      status: 'pending',
+      reporter_id: req.user.id,
       reporter_name: req.user.real_name,
-      model_element_id: model_element_id || null,    // BIM 构件关联
+      model_element_id: model_element_id || null,
       model_element_name: model_element_name || null,
       model_name: model_name || null,
-      handler_id: null, handler_name: null,  // 处理人（待分配）
-      images: images || null,                // 图片URL数组
+      handler_id: null, handler_name: null,
+      repair_start_date: repair_start_date || null,
+      repair_end_date: repair_end_date || null,
+      images: images || null,
       completed_at: null
     })
-    res.json({ code: 200, message: '报修成功', data: { id: record.id } })
+    res.json({ code: 200, message: '维修成功', data: { id: record.id } })
   } catch (err) {
     res.json({ code: 500, message: err.message })
   }
@@ -129,10 +132,9 @@ router.put('/update/:id', authMiddleware, async (req, res) => {
     if (!record) return res.json({ code: 404, message: '记录不存在' })
 
     const updates = {}
-    const { status, handler_id, handler_name, description, priority, images, title, location, building, floor, room, category, model_element_id, model_element_name, model_name } = req.body
+    const { status, handler_id, handler_name, description, priority, images, title, location, building, floor, room, category, model_element_id, model_element_name, model_name, repair_start_date, repair_end_date } = req.body
     if (status !== undefined) {
       updates.status = status
-      // 标记完成时自动记录完成时间
       if (status === 'completed') updates.completed_at = new Date().toISOString()
     }
     if (handler_id !== undefined) updates.handler_id = handler_id
@@ -149,6 +151,8 @@ router.put('/update/:id', authMiddleware, async (req, res) => {
     if (model_element_id !== undefined) updates.model_element_id = model_element_id
     if (model_element_name !== undefined) updates.model_element_name = model_element_name
     if (model_name !== undefined) updates.model_name = model_name
+    if (repair_start_date !== undefined) updates.repair_start_date = repair_start_date
+    if (repair_end_date !== undefined) updates.repair_end_date = repair_end_date
 
     if (Object.keys(updates).length === 0) {
       return res.json({ code: 400, message: '没有需要更新的字段' })

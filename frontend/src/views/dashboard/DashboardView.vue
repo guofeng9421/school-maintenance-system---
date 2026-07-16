@@ -1,18 +1,18 @@
 <template>
   <div class="page-container">
     <el-row :gutter="20" class="stat-row">
-      <el-col :span="6">
+      <el-col :span="8">
         <el-card shadow="hover" class="stat-card">
           <div class="stat-item">
             <i class="el-icon-document" style="color:#409eff;font-size:28px;"></i>
             <div class="stat-content">
-              <div class="stat-title">报修总数</div>
+              <div class="stat-title">维修总数</div>
               <div class="stat-value">{{ stats.total }}</div>
             </div>
           </div>
         </el-card>
       </el-col>
-      <el-col :span="6">
+      <el-col :span="8">
         <el-card shadow="hover" class="stat-card">
           <div class="stat-item">
             <i class="el-icon-time" style="color:#e6a23c;font-size:28px;"></i>
@@ -23,7 +23,7 @@
           </div>
         </el-card>
       </el-col>
-      <el-col :span="6">
+      <!-- <el-col :span="6">
         <el-card shadow="hover" class="stat-card">
           <div class="stat-item">
             <i class="el-icon-loading" style="color:#409eff;font-size:28px;"></i>
@@ -33,8 +33,8 @@
             </div>
           </div>
         </el-card>
-      </el-col>
-      <el-col :span="6">
+      </el-col> -->
+      <el-col :span="8">
         <el-card shadow="hover" class="stat-card">
           <div class="stat-item">
             <i class="el-icon-circle-check" style="color:#67c23a;font-size:28px;"></i>
@@ -56,14 +56,14 @@
       </el-col>
       <el-col :span="12">
         <el-card shadow="hover">
-          <div slot="header"><span>优先级统计</span></div>
+          <div slot="header"><span>维修公司统计</span></div>
           <div ref="priorityChartRef" style="height: 300px;"></div>
         </el-card>
       </el-col>
     </el-row>
 
-    <el-card shadow="hover" style="margin-top: 20px;">
-      <div slot="header"><span>最近报修</span></div>
+    <!-- <el-card shadow="hover" style="margin-top: 20px;">
+      <div slot="header"><span>最近维修</span></div>
       <el-table :data="stats.recent" stripe>
         <el-table-column prop="title" label="标题" />
         <el-table-column prop="status" label="状态" width="100">
@@ -76,11 +76,11 @@
             <el-tag :type="priorityType[row.priority]">{{ priorityMap[row.priority] }}</el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="created_at" label="报修时间" width="180">
+        <el-table-column prop="created_at" label="维修时间" width="180">
           <template slot-scope="{ row }">{{ formatDate(row.created_at) }}</template>
         </el-table-column>
       </el-table>
-    </el-card>
+    </el-card> -->
   </div>
 </template>
 
@@ -89,7 +89,7 @@ import * as echarts from 'echarts'
 import { categoryMap, priorityMap, statusMap, statusType, priorityType } from '../../config/constants'
 import { formatDate } from '../../utils'
 
-// 数据看板页面：展示统计卡片、ECharts图表和最近报修列表
+// 数据看板页面：展示统计卡片、ECharts图表和最近维修列表
 export default {
   name: 'DashboardView',
   data() {
@@ -97,7 +97,7 @@ export default {
       // 统计数据：总数/待处理/处理中/已完成 + 分类统计 + 优先级统计 + 最近记录
       stats: {
         total: 0, pending: 0, processing: 0, completed: 0,
-        byCategory: [], byPriority: [], recent: []
+        byCategory: [], byHandlerName: [], recent: []
       },
       categoryChart: null,   // 分类饼图实例
       priorityChart: null,   // 优先级柱状图实例
@@ -106,6 +106,7 @@ export default {
   },
   mounted() {
     this.fetchData()  // 页面加载时获取统计数据
+    
   },
   beforeDestroy() {
     // 销毁 ECharts 实例，释放内存
@@ -139,7 +140,8 @@ export default {
         tooltip: {},
         xAxis: {
           type: 'category',
-          data: data.map(item => this.priorityMap[item.priority] || item.priority)
+          data: data.map(item => this.priorityMap[item.handlerName] || item.handlerName
+)
         },
         yAxis: { type: 'value' },
         series: [{
@@ -157,11 +159,12 @@ export default {
     async fetchData() {
       try {
         const res = await this.$API.maintenanceApi.getStatistics()
+        console.log('获取统计数据:', res)
         if (res.code === 200) {
           this.stats = { ...this.stats, ...res.data }
           // 有数据时才初始化对应图表
           if (this.stats.byCategory.length) this.initCategoryChart(this.stats.byCategory)
-          if (this.stats.byPriority.length) this.initPriorityChart(this.stats.byPriority)
+          if (this.stats.byHandlerName.length) this.initPriorityChart(this.stats.byHandlerName)
         }
       } catch (e) {
         console.error(e)

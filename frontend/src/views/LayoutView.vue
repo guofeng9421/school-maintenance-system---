@@ -21,7 +21,7 @@
           </el-menu-item>
           <el-menu-item index="/maintenance/create">
             <i class="el-icon-plus"></i>
-            <span>新建报修</span>
+            <span>新建维修</span>
           </el-menu-item>
           <el-menu-item v-if="isAdmin" index="/users">
             <i class="el-icon-user"></i>

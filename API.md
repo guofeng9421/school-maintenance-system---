@@ -143,15 +143,15 @@
 - **参数**：`:id` 维修记录ID
 - **返回**：`{ code: 200, data: { 同列表单项字段 } }`
 
-### 3. 新建报修
+### 3. 新建维修
 - **路径**：`POST /api/maintenance/create`
 - **需要认证**：是
 - **参数**：
 
 | 参数 | 类型 | 必填 | 说明 |
 |------|------|------|------|
-| title | string | 是 | 报修标题 |
-| location | string | 否 | 报修位置 |
+| title | string | 是 | 维修标题 |
+| location | string | 否 | 维修位置 |
 | building | string | 否 | 楼栋 |
 | floor | string | 否 | 楼层 |
 | room | string | 否 | 房间号 |
@@ -163,7 +163,7 @@
 | model_element_name | string | 否 | BIM构件名称 |
 | model_name | string | 否 | 所属模型名称 |
 
-- **返回**：`{ code: 200, message: "报修成功", data: { id: number } }`
+- **返回**：`{ code: 200, message: "维修成功", data: { id: number } }`
 
 ### 4. 更新记录
 - **路径**：`PUT /api/maintenance/update/:id`
@@ -293,17 +293,17 @@
 | 字段 | 类型 | 说明 |
 |------|------|------|
 | id | number | 记录ID（自增） |
-| title | string | 报修标题 |
+| title | string | 维修标题 |
 | description | string | 问题描述 |
-| location | string | 报修位置 |
+| location | string | 维修位置 |
 | building | string | 楼栋 |
 | floor | string | 楼层 |
 | room | string | 房间号 |
 | category | string | 分类 |
 | priority | string | 优先级 |
 | status | string | 状态：pending/processing/completed/rejected |
-| reporter_id | number | 报修人ID |
-| reporter_name | string | 报修人姓名 |
+| reporter_id | number | 维修人ID |
+| reporter_name | string | 维修人姓名 |
 | handler_id | string | 处理人ID |
 | handler_name | string | 处理人姓名 |
 | model_element_id | string | BIM构件ID |
