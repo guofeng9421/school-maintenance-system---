@@ -7,7 +7,7 @@
           <el-input v-model="form.title" placeholder="请输入维修标题" :disabled="!hasComponent" />
         </el-form-item>
         <el-form-item label="维修大类" prop="category">
-          <el-select v-model="form.category" placeholder="请选择大类" style="width:100%" :disabled="!hasComponent" @change="handleCategoryChange" @focus="fetchRepairCategories()">
+          <el-select v-model="form.category" placeholder="请选择大类" style="width:100%" :disabled="!hasComponent" @change="handleCategoryChange">
             <el-option :label="item.name" :value="item.name" v-for="item in category" :key="item.id" />
           </el-select>
         </el-form-item>
@@ -46,12 +46,12 @@
         <el-row :gutter="20">
           <el-col :span="12">
             <el-form-item label="开始维修时间" prop="assigned_at">
-              <el-date-picker v-model="form.assigned_at" type="date" placeholder="选择开始日期" value-format="yyyy-MM-dd" style="width:100%" :disabled="!hasComponent"  />
+              <el-date-picker v-model="form.assigned_at" type="date" placeholder="选择开始日期" value-format="yyyy-MM-dd" style="width:100%" :disabled="!hasComponent" />
             </el-form-item>
           </el-col>
           <el-col :span="12">
             <el-form-item label="维修结束时间" prop="completed_at">
-              <el-date-picker v-model="form.completed_at" type="date" placeholder="选择结束日期" value-format="yyyy-MM-dd" style="width:100%" :disabled="!hasComponent" :disabled-date="disabledEndDate" />
+              <el-date-picker v-model="form.completed_at" type="date" placeholder="选择结束日期" value-format="yyyy-MM-dd" style="width:100%" :disabled="!hasComponent" :picker-options="pickerOptions" />
             </el-form-item>
           </el-col>
         </el-row>
@@ -163,12 +163,27 @@ export default {
     hasComponent() {
       return !!this.form.model_element_id;
     },
+    // 控制结束日期选择器的可选范围，禁止选择早于开始日期的时间
+    pickerOptions() {
+      return {
+        disabledDate: (time) => {
+          if (!this.form.assigned_at) return false;
+          const [y, m, d] = this.form.assigned_at.split("-").map(Number);
+          const startDate = new Date(y, m - 1, d).getTime();
+          return time.getTime() < startDate;
+        },
+      };
+    },
   },
   mounted() {
     // 首次加载：编辑模式下拉取详情
     if (this.isEdit) {
       this.fetchDetail();
+      this.fetchRepairCategories();
+    } else {
+      this.fetchRepairCategories();
     }
+
     // 从 BIM 页面跳转过来时，读取 query 参数自动填充表单
     if (this.$route.query.model_element_id) {
       this.fillComponentFromQuery(this.$route.query);
@@ -183,14 +198,14 @@ export default {
         this.fetchDetail();
       }
     },
-    'form.assigned_at'(newVal) {
+    "form.assigned_at"(newVal) {
       if (this.form.completed_at && newVal) {
-        const [y, m, d] = newVal.split('-').map(Number);
+        const [y, m, d] = newVal.split("-").map(Number);
         const startDate = new Date(y, m - 1, d).getTime();
-        const [y2, m2, d2] = this.form.completed_at.split('-').map(Number);
+        const [y2, m2, d2] = this.form.completed_at.split("-").map(Number);
         const endDate = new Date(y2, m2 - 1, d2).getTime();
         if (endDate < startDate) {
-          this.form.completed_at = ''
+          this.form.completed_at = "";
         }
       }
     },
@@ -236,7 +251,7 @@ export default {
         if (this.form.category) {
           await this.handleCategoryChange(this.form.category);
         }
-         this.form.sub_category = savedSubCategory;  // 恢复子类选中值
+        this.form.sub_category = savedSubCategory; // 恢复子类选中值
         // 将已有图片URL转换为el-upload组件需要的fileList格式
         if (this.form.images && this.form.images.length) {
           this.fileList = this.form.images.map((url, i) => ({
@@ -261,7 +276,12 @@ export default {
     },
     // 文件移除回调：同步更新fileList
     handleFileRemove(file, list) {
+      console.log("文件移除:", file, list);
       this.fileList = list;
+      // 如果是已上传的旧图片（没有raw属性），从form.images中移除
+      if (!file.raw && file.url) {
+        this.form.images = this.form.images.filter((url) => url !== file.url);
+      }
     },
     // 提交表单：先校验 → 上传图片 → 提交维修数据
     async handleSubmit() {
@@ -330,7 +350,6 @@ export default {
     async fetchRepairCategories() {
       try {
         const res = await this.$API.maintenanceApi.getRepair();
-        console.log("获取维修分类:", res);
         if (res.code === 200) {
           this.category = res.data;
         }
@@ -345,21 +364,12 @@ export default {
       if (!categoryId) return;
       try {
         const res = await this.$API.maintenanceApi.getRepairSub(categoryId);
-        console.log("获取维修子类:", res);
         if (res.code === 200) {
           this.subCategory = res.data;
         }
       } catch (e) {
         console.error("获取维修子类失败:", e);
       }
-    },
-    // 禁止选择结束日期早于开始日期
-    disabledEndDate(time) {
-      console.log(this.form.assigned_at, time);
-      if (!this.form.assigned_at) return false;
-      const [y, m, d] = this.form.assigned_at.split('-').map(Number);
-      const startDate = new Date(y, m - 1, d).getTime();
-      return time.getTime() < startDate;
     },
   },
 };
