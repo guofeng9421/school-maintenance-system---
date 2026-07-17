@@ -10,6 +10,8 @@ module.exports = {
   // 开发服务器配置：端口 + API 代理
   devServer: {
     port: 3000,                        // 前端开发服务器端口
+    // 关键：关闭客户端的 websocket 报错检测
+    client: false,
     proxy: {
       // 代理 /api 请求到后端服务
       '/api': {
