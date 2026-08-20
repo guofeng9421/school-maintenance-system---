@@ -226,7 +226,6 @@ export default {
       const res = await this.$API.maintenanceApi.getDetail(
         this.$route.params.id
       );
-      console.log("获取维修详情:", res);
       if (res.code === 200) {
         const savedSubCategory = res.data.sub_category || [];
         Object.assign(this.form, {
@@ -276,7 +275,6 @@ export default {
     },
     // 文件移除回调：同步更新fileList
     handleFileRemove(file, list) {
-      console.log("文件移除:", file, list);
       this.fileList = list;
       // 如果是已上传的旧图片（没有raw属性），从form.images中移除
       if (!file.raw && file.url) {
@@ -332,7 +330,6 @@ export default {
                 submitData
               )
             : await this.$API.maintenanceApi.create(submitData);
-          console.log("提交维修数据:", submitData);
           if (res.code === 200) {
             this.$message.success(res.message);
             this.$router.push("/maintenance");

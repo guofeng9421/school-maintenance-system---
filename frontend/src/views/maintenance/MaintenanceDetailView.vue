@@ -72,7 +72,6 @@
 
 <script>
 import {
-  categoryMap,
   statusMap,
   statusType,
 } from "../../config/constants";
@@ -104,7 +103,6 @@ export default {
         images: [],
         sub_category:[]
       },
-      categoryMap,
       statusMap,
       statusType,
     };
@@ -112,7 +110,6 @@ export default {
   computed: {
     activeStep() {
       const map = {  processing: 2, completed: 3,};
-      console.log(this.record.status);
       return map[this.record.status] !== undefined
         ? map[this.record.status]
         : 2;
@@ -134,7 +131,6 @@ export default {
         const res = await this.$API.maintenanceApi.getDetail(
           this.$route.params.id
         );
-        console.log("获取维修详情:", res);
         if (res.code === 200) {
           Object.assign(this.record, res.data);
         }

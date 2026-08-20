@@ -195,7 +195,6 @@ export default {
     async fetchModels() {
       try {
         const res = await this.$API.bimfaceApi.getModels();
-        console.log("获取模型列表:", res);
         if (res.code === 200) {
           const noTokenModels = res.data.filter((m) => !m.token);
           if (noTokenModels.length > 0) {
@@ -599,7 +598,6 @@ export default {
           self.floorData = tree;
           self.currentFloorModel = model;
           const floor = self.findFloorInTree(tree, objectId);
-          console.log("点击构件所属楼层:", floor,tree);
           if (floor) {
             self.selectFloorData = floor.actualName;
           }
@@ -610,10 +608,8 @@ export default {
             self.modelList[modelIndex] || self.modelList.find((m) => m.loaded);
           const floorName = floor ? floor.name || floor.actualName : "自动识别";
           const room = self.findRoomInFloor(floor, objectId);
-          console.log("点击构件所属房间:", room);
           const roomName = room ? room.name || room.actualName : "未知房间";
           const familyType = self.findFamilyType(floor, objectId);
-          console.log("点击构件所属族类型:", familyType);
           const familyTypeName = familyType || "";
           const applyElementInfo = (name) => {
             self.selectedElement = {
@@ -624,7 +620,6 @@ export default {
               modelName: matchedModel ? matchedModel.name : "",
             };
             self.fetchElementRecords(self.selectedElement.id);
-            console.log("已选中构件:", self.selectedElement);
             self.activeTab = "element";
           };
 

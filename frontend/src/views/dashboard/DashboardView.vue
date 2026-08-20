@@ -61,32 +61,11 @@
         </el-card>
       </el-col>
     </el-row>
-
-    <!-- <el-card shadow="hover" style="margin-top: 20px;">
-      <div slot="header"><span>最近维修</span></div>
-      <el-table :data="stats.recent" stripe>
-        <el-table-column prop="title" label="标题" />
-        <el-table-column prop="status" label="状态" width="100">
-          <template slot-scope="{ row }">
-            <el-tag :type="statusType[row.status]">{{ statusMap[row.status] }}</el-tag>
-          </template>
-        </el-table-column>
-        <el-table-column prop="priority" label="优先级" width="100">
-          <template slot-scope="{ row }">
-            <el-tag :type="priorityType[row.priority]">{{ priorityMap[row.priority] }}</el-tag>
-          </template>
-        </el-table-column>
-        <el-table-column prop="created_at" label="维修时间" width="180">
-          <template slot-scope="{ row }">{{ formatDate(row.created_at) }}</template>
-        </el-table-column>
-      </el-table>
-    </el-card> -->
   </div>
 </template>
 
 <script>
 import * as echarts from 'echarts'
-import { categoryMap, priorityMap, statusMap, statusType, priorityType } from '../../config/constants'
 import { formatDate } from '../../utils'
 
 // 数据看板页面：展示统计卡片、ECharts图表和最近维修列表
@@ -101,7 +80,6 @@ export default {
       },
       categoryChart: null,   // 分类饼图实例
       priorityChart: null,   // 优先级柱状图实例
-      categoryMap, priorityMap, statusMap, statusType, priorityType  // 常量映射
     }
   },
   mounted() {
@@ -125,7 +103,7 @@ export default {
           type: 'pie',
           radius: ['40%', '70%'],  // 环形图：内径40%，外径70%
           data: data.map(item => ({
-            name: this.categoryMap[item.category] || item.category,
+            name: item.category,
             value: item.count
           })),
           label: { formatter: '{b}: {c}' }  // 标签显示名称和数量
@@ -140,7 +118,7 @@ export default {
         tooltip: {},
         xAxis: {
           type: 'category',
-          data: data.map(item => this.priorityMap[item.handlerName] || item.handlerName
+          data: data.map(item => item.handlerName
 )
         },
         yAxis: { type: 'value' },
@@ -159,7 +137,6 @@ export default {
     async fetchData() {
       try {
         const res = await this.$API.maintenanceApi.getStatistics()
-        console.log('获取统计数据:', res)
         if (res.code === 200) {
           this.stats = { ...this.stats, ...res.data }
           // 有数据时才初始化对应图表
