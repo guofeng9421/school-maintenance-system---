@@ -2,8 +2,6 @@
 export const statusMap = { pending: '待处理', processing: '处理中', completed: '已完成', rejected: '已驳回' }
 export const statusType = { pending: 'warning', processing: '', completed: 'success', rejected: 'danger' }
 
-export const priorityMap = { low: '低', medium: '中', high: '高', urgent: '紧急' }
-export const priorityType = { low: 'info', medium: '', high: 'warning', urgent: 'danger' }
 
 export const categoryMap = {
   electrical: '电气', plumbing: '水暖', furniture: '家具',
