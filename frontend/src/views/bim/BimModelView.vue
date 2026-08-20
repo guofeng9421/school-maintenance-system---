@@ -197,7 +197,10 @@ export default {
         const res = await this.$API.bimfaceApi.getModels();
         console.log("获取模型列表:", res);
         if (res.code === 200) {
-          // 过滤掉没有token的模型，添加加载状态字段
+          const noTokenModels = res.data.filter((m) => !m.token);
+          if (noTokenModels.length > 0) {
+            this.$message.warning(`${noTokenModels.map(m => m.name).join('、')} 的 ViewToken 为空，已跳过加载`);
+          }
           this.modelList = res.data
             .filter((m) => m.token)
             .map((m) => ({
