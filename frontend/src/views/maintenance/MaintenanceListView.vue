@@ -13,6 +13,9 @@
       <el-button type="primary" @click="fetchList">
         <i class="el-icon-search"></i> 搜索
       </el-button>
+      <el-button type="warning" @click="handleExport" :loading="exportLoading">
+        <i class="el-icon-download"></i> 导出 Excel
+      </el-button>
       <el-button type="success" @click="$router.push('/maintenance/create')">
         <i class="el-icon-plus"></i> 新建维修
       </el-button>
@@ -89,6 +92,7 @@ export default {
       list: [], // 列表数据
       total: 0, // 总记录数（用于分页）
       loading: false, // 表格loading状态
+      exportLoading: false, // 导出loading状态
       category: [], // 分类选项列表
       // 查询参数：页码、每页条数、关键词、状态、分类、优先级
       query: {
@@ -97,6 +101,7 @@ export default {
         keyword: "",
         status: "",
         category: "",
+        priority: "",
       },
       categoryMap,
       statusMap,
@@ -147,6 +152,32 @@ export default {
       const res = await this.$API.maintenanceApi.getRepair();
       if (res.code === 200) {
         this.category = res.data;
+      }
+    },
+    // 导出 Excel
+    async handleExport() {
+      this.exportLoading = true;
+      try {
+        const res = await this.$API.maintenanceApi.exportExcel({
+          page: this.query.page,
+          pageSize: this.query.pageSize,
+        });
+        const blob = new Blob([res], {
+          type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        });
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = '报修工单.xlsx';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+        this.$message.success('导出成功');
+      } catch (err) {
+        this.$message.error('导出失败');
+      } finally {
+        this.exportLoading = false;
       }
     },
   },

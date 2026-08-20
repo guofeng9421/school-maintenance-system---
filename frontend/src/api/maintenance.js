@@ -1,4 +1,4 @@
-// 维修记录相关接口：CRUD + 统计 + 图片上传
+// 维修记录相关接口：CRUD + 统计 + 图片上传 + 导出
 import request from './request'
 
 // 获取维修记录列表（分页+筛选）
@@ -32,4 +32,10 @@ export const getStatistics = () => request.get('/maintenance/statistics')
 export const uploadImages = (formData) => request.post('/maintenance/upload', formData, {
   headers: { 'Content-Type': 'multipart/form-data' },
   timeout: 30000  // 上传超时30秒
+})
+
+// 导出维修记录 Excel（返回 blob 二进制流）
+export const exportExcel = (params) => request.get('/maintenance/export', {
+  params,
+  responseType: 'blob'
 })

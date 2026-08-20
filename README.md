@@ -18,7 +18,7 @@ school-maintenance-system/
 cd backend
 npm install
 npm run init-db    # 首次运行，初始化数据库和默认账号
-npm start          # 启动后端服务 http://localhost:3001
+npm start          # 启动后端服务 http://localhost:8080
 ```
 
 ### 前端

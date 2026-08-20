@@ -3,4 +3,5 @@ import * as authApi from './auth'
 import * as maintenanceApi from './maintenance'
 import * as bimfaceApi from './bimface'
 
-export default { authApi, maintenanceApi, bimfaceApi }
+
+export default { authApi, maintenanceApi, bimfaceApi, }
