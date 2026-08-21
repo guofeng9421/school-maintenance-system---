@@ -125,9 +125,12 @@ export default {
         series: [{
           type: 'bar',
           data: data.map(item => item.count),
-          // 柱状图颜色：低=灰色，中=蓝色，高=橙色，紧急=红色
+          // 柱状图颜色
           itemStyle: {
-            color: (params) => ['#909399', '#409eff', '#e6a23c', '#f56c6c'][params.dataIndex]
+            color: (params) => {
+              const colors = ['#409eff', '#67c23a', '#e6a23c', '#f56c6c', '#909399']
+              return colors[params.dataIndex % colors.length]
+            }
           }
         }]
       })

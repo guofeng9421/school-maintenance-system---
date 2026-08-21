@@ -184,7 +184,7 @@ export default {
         window.URL.revokeObjectURL(url);
         this.$message.success('导出成功');
       } catch (err) {
-        this.$message.error('导出失败');
+        this.$message.error(err.message || '导出失败');
       } finally {
         this.exportLoading = false;
       }

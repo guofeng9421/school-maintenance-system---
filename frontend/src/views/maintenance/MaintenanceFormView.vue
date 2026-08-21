@@ -215,7 +215,7 @@ export default {
     fillComponentFromQuery(query) {
       this.form.model_element_id = query.model_element_id;
       this.form.model_element_name = query.model_element_name;
-      this.form.floor = query.floor.split("-")[1] || query.floor;
+      this.form.floor = query.floor ? (query.floor.split("-")[1] || query.floor) : "";
       this.form.room = query.room || "";
       this.form.model_name = query.model_name || "";
       this.form.building = query.model_name.split(".")[0]; // 如果 BIM 页面没有传楼栋信息，则默认使用模型名称
@@ -337,7 +337,7 @@ export default {
             this.$message.error(res.message);
           }
         } catch (e) {
-          this.$message.error(e);
+          this.$message.error(e.message || '操作失败');
         } finally {
           this.submitting = false;
         }
@@ -356,7 +356,7 @@ export default {
     },
     // 大类变更时获取子分类列表
     async handleCategoryChange(categoryId) {
-      this.form.sub_category = "";
+      this.form.sub_category = [];
       this.subCategory = [];
       if (!categoryId) return;
       try {

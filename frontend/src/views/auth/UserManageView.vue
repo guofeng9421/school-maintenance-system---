@@ -142,7 +142,7 @@ export default {
           this.dialogVisible = false
           this.fetchUsers()
         } catch (e) {
-          this.$message.error(e)
+          this.$message.error(e.message || '操作失败');
         } finally {
           this.submitting = false
         }
