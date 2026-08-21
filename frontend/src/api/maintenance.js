@@ -35,7 +35,6 @@ export const uploadImages = (formData) => request.post('/maintenance/upload', fo
 })
 
 // 导出维修记录 Excel（返回 blob 二进制流）
-export const exportExcel = (params) => request.get('/maintenance/export', {
-  params,
+export const exportExcel = (data) => request.post('/maintenance/export', data, {
   responseType: 'blob'
 })

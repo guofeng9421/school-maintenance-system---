@@ -166,6 +166,10 @@ export default {
         const res = await this.$API.maintenanceApi.exportExcel({
           page: this.query.page,
           pageSize: this.query.pageSize,
+          keyword: this.query.keyword,
+          status: this.query.status,
+          category: this.query.category,
+          priority: this.query.priority,
         });
         const blob = new Blob([res], {
           type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
@@ -173,7 +177,7 @@ export default {
         const url = window.URL.createObjectURL(blob);
         const link = document.createElement('a');
         link.href = url;
-        link.download = '报修工单.xlsx';
+        link.download = '维修工单.xlsx';
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
