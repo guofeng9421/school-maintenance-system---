@@ -74,8 +74,8 @@
 import {
   statusMap,
   statusType,
-} from "../../config/constants";
-import { formatDate, formatDateOnly } from "../../utils";
+} from "@/config/constants";
+import { formatDate, formatDateOnly } from "@/utils";
 
 export default {
   name: "MaintenanceDetailView",

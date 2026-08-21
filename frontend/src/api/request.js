@@ -1,6 +1,6 @@
 import axios from 'axios'
 import { Message } from 'element-ui'
-import router from '../router'
+import router from '@/router'
 
 // 创建 axios 实例，基础路径 /api 由 devServer 代理到后端
 const request = axios.create({

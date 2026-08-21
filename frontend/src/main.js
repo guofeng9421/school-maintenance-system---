@@ -1,11 +1,11 @@
 import Vue from 'vue'
 import ElementUI from 'element-ui'
 import 'element-ui/lib/theme-chalk/index.css'
-import App from './App.vue'
-import router from './router'
-import store from './store'
-import API from './api'              // 导入中央汇总的 API 模块
-import './styles/global.scss'
+import App from '@/App.vue'
+import router from '@/router'
+import store from '@/store'
+import API from '@/api'              // 导入中央汇总的 API 模块
+import '@/styles/global.scss'
 
 // 注册 Element UI 组件库（默认尺寸 small）
 Vue.use(ElementUI, { size: 'small', zIndex: 3000 })

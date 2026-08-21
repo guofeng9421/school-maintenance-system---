@@ -96,8 +96,8 @@
 </template>
 
 <script>
-import { statusMap, statusType } from "../../config/constants";
-import { formatDate } from "../../utils";
+import { statusMap, statusType } from "@/config/constants";
+import { formatDate } from "@/utils";
 
 export default {
   name: "BimModelView",

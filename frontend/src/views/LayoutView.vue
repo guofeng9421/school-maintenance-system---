@@ -64,7 +64,7 @@
 </template>
 
 <script>
-import { roleMap } from "../config/constants";
+import { roleMap } from "@/config/constants";
 
 // 主布局组件：包含左侧导航栏 + 顶部栏 + 内容区域
 export default {

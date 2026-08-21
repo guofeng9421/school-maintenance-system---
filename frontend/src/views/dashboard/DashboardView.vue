@@ -66,7 +66,7 @@
 
 <script>
 import * as echarts from 'echarts'
-import { formatDate } from '../../utils'
+import { formatDate } from '@/utils'
 
 // 数据看板页面：展示统计卡片、ECharts图表和最近维修列表
 export default {

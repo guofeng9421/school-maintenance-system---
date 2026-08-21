@@ -81,8 +81,8 @@
 </template>
 
 <script>
-import { categoryMap, statusMap, statusType } from "../../config/constants";
-import { formatDate, formatDateOnly } from "../../utils";
+import { categoryMap, statusMap, statusType } from "@/config/constants";
+import { formatDate, formatDateOnly } from "@/utils";
 
 // 维修记录列表页面：展示所有维修记录，支持搜索、筛选、分页
 export default {
