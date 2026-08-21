@@ -1,16 +1,16 @@
 <template>
   <div class="page-container">
     <div class="filter-bar">
-      <el-input v-model="query.keyword" placeholder="搜索标题/位置" clearable style="width:220px" @clear="fetchList" @keyup.enter.native="fetchList" />
-      <el-select v-model="query.status" placeholder="状态" clearable style="width:130px" @change="fetchList">
+      <el-input v-model="query.keyword" placeholder="搜索标题/位置" clearable style="width:220px" @clear="fetchListFilter" @keyup.enter.native="fetchList" />
+      <el-select v-model="query.status" placeholder="状态" clearable style="width:130px" @change="fetchListFilter">
         <el-option label="待处理" value="pending" />
         <el-option label="已完成" value="completed" />
       </el-select>
-      <el-select v-model="query.category" placeholder="分类" clearable style="width:130px" @change="fetchList" @focus="getcategory()">
+      <el-select v-model="query.category" placeholder="分类" clearable style="width:130px" @change="fetchListFilter" @focus="getcategory()">
         <el-option v-for="item in category" :key="item.id" :label="item.label" :value="item.name" />
 
       </el-select>
-      <el-button type="primary" @click="fetchList">
+      <el-button type="primary" @click="fetchListFilter">
         <i class="el-icon-search"></i> 搜索
       </el-button>
       <el-button type="warning" @click="handleExport" :loading="exportLoading">
@@ -76,7 +76,7 @@
       </el-table-column>
     </el-table>
 
-    <el-pagination v-if="total > 0" style="margin-top: 16px; text-align: right;" :current-page="query.page" :page-size="query.pageSize" :total="total" :page-sizes="[10, 20, 50]" layout="total, sizes, prev, pager, next, jumper" @current-change="handlePageChange" @size-change="handleSizeChange" />
+    <el-pagination style="margin-top: 16px; text-align: right;" :current-page="query.page" :page-size="query.pageSize" :total="total" :page-sizes="[10, 20, 50]" layout="total, sizes, prev, pager, next, jumper" @current-change="handlePageChange" @size-change="handleSizeChange" />
   </div>
 </template>
 
@@ -94,7 +94,7 @@ export default {
       loading: false, // 表格loading状态
       exportLoading: false, // 导出loading状态
       category: [], // 分类选项列表
-      // 查询参数：页码、每页条数、关键词、状态、分类、优先级
+      // 查询参数：页码、每页条数、关键词、状态、分类
       query: {
         page: 1,
         pageSize: 10,
@@ -154,6 +154,11 @@ export default {
         this.category = res.data;
       }
     },
+    fetchListFilter() {
+      this.query.page = 1; // 重置到第一页
+      this.fetchList();
+    },
+
     // 导出 Excel
     async handleExport() {
       this.exportLoading = true;
