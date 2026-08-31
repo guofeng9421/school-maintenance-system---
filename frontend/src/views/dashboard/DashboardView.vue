@@ -23,17 +23,6 @@
           </div>
         </el-card>
       </el-col>
-      <!-- <el-col :span="6">
-        <el-card shadow="hover" class="stat-card">
-          <div class="stat-item">
-            <i class="el-icon-loading" style="color:#409eff;font-size:28px;"></i>
-            <div class="stat-content">
-              <div class="stat-title">处理中</div>
-              <div class="stat-value">{{ stats.processing }}</div>
-            </div>
-          </div>
-        </el-card>
-      </el-col> -->
       <el-col :span="8">
         <el-card shadow="hover" class="stat-card">
           <div class="stat-item">
@@ -50,13 +39,13 @@
     <el-row :gutter="20" style="margin-top: 20px;">
       <el-col :span="12">
         <el-card shadow="hover">
-          <div slot="header"><span>分类统计</span></div>
+          <div slot="header"><span>分类统计（数量）</span></div>
           <div ref="categoryChartRef" style="height: 300px;"></div>
         </el-card>
       </el-col>
       <el-col :span="12">
         <el-card shadow="hover">
-          <div slot="header"><span>维修公司统计</span></div>
+          <div slot="header"><span>维修公司统计（数量）</span></div>
           <div ref="priorityChartRef" style="height: 300px;"></div>
         </el-card>
       </el-col>
@@ -125,13 +114,8 @@ export default {
         series: [{
           type: 'bar',
           data: data.map(item => item.count),
-          // 柱状图颜色
-          itemStyle: {
-            color: (params) => {
-              const colors = ['#409eff', '#67c23a', '#e6a23c', '#f56c6c', '#909399']
-              return colors[params.dataIndex % colors.length]
-            }
-          }
+          // 设置为按照数据项使用默认调色盘颜色区分
+          colorBy: 'data', 
         }]
       })
     },

@@ -135,12 +135,24 @@ export default {
     },
   },
   async mounted() {
+    // 捕获 BIMface SDK 内部的 dispatchEvent 错误（组件销毁时动画回调导致）
+    this._originalOnError = window.onerror;
+    window.onerror = (msg) => {
+      if (msg && msg.includes('dispatchEvent')) return true; // 忽略 SDK 内部错误
+      return this._originalOnError ? this._originalOnError.apply(window, arguments) : false;
+    };
+
     if (this.$route.query.model_element_id) {
       this.pendingFocusId = String(this.$route.query.model_element_id);
     }
     await this.fetchModels();
   },
   beforeDestroy() {
+    // 恢复原始的 window.onerror
+    if (this._originalOnError !== undefined) {
+      window.onerror = this._originalOnError;
+    }
+
     // 清理所有 setTimeout 定时器
     this.activeTimers.forEach((id) => clearTimeout(id));
     this.activeTimers = [];
@@ -148,23 +160,27 @@ export default {
     // 移除窗口 resize 监听
     window.onresize = null;
 
-    // 移除 viewer 点击事件监听
-    if (this.sharedViewer && this.viewerClickHandler) {
-      try {
+    // 先移除事件监听，再销毁 SDK
+    try {
+      if (this.sharedViewer && this.viewerClickHandler) {
         this.sharedViewer.removeEventListener(
           Glodon.Bimface.Viewer.Viewer3DEvent.MouseClicked,
           this.viewerClickHandler
         );
-      } catch (e) {}
+      }
+    } catch (e) {
+      // 忽略移除事件监听的错误
     }
 
-    // 销毁 BIM SDK WebGL 应用，释放显存
-    if (this.sharedApp) {
-      try {
+    // 销毁 SDK 并清理引用
+    try {
+      if (this.sharedApp) {
         this.sharedApp.destroy();
-      } catch (e) {}
-      this.sharedApp = null;
+      }
+    } catch (e) {
+      // 忽略 SDK 销毁时的错误，避免内部回调报错
     }
+    this.sharedApp = null;
     this.sharedViewer = null;
     this.bimViewers = {};
 
@@ -307,6 +323,8 @@ export default {
         const modelData = viewer3D.getModel();
         if (modelData && modelData.getModelTree) {
           modelData.getModelTree((tree) => {
+            // 组件已销毁，不再处理
+            if (!self.sharedViewer) return;
             if (tree && tree.length > 0) {
               // 按模型 ID 缓存楼层树
               self.$set(self.modelFloors, modelListItem.id, tree);
@@ -405,6 +423,8 @@ export default {
 
           // 获取被点击模型的楼层树，回调内执行楼层分离和面板填充
           model.getModelTree((tree) => {
+            // 组件已销毁，不再处理
+            if (!self.sharedViewer) return;
             if (tree && tree.length > 0) {
               self.floorData = tree;
               self.currentFloorModel = model;
@@ -594,6 +614,8 @@ export default {
 
       // 获取被点击模型的楼层树，回调内执行面板填充
       model.getModelTree((tree) => {
+        // 组件已销毁，不再处理
+        if (!self.sharedViewer) return;
         if (tree && tree.length > 0) {
           self.floorData = tree;
           self.currentFloorModel = model;
@@ -789,22 +811,25 @@ export default {
 
     // 跳转到维修页面，传递构件信息
     goCreateRecord() {
-      const from = this.$route.query.from;
-      const recordId = this.$route.query.record_id;
-      this.$router.push({
-        path:
-          from === "edit"
-            ? `/maintenance/edit/${recordId}`
-            : "/maintenance/create",
-        query: {
-          model_element_id: this.selectedElement.id,
-          model_element_name: this.selectedElement.name,
-          floor: this.selectedElement.floor,
-          room: this.selectedElement.room,
-          model_name: this.selectedElement.modelName,
-          family_type: this.selectedElement.familyType,
-        },
-      });
+      // 等待缩放动画部分完成后再跳转，避免 SDK 内部回调报错
+      setTimeout(() => {
+        const from = this.$route.query.from;
+        const recordId = this.$route.query.record_id;
+        this.$router.push({
+          path:
+            from === "edit"
+              ? `/maintenance/edit/${recordId}`
+              : "/maintenance/create",
+          query: {
+            model_element_id: this.selectedElement.id,
+            model_element_name: this.selectedElement.name,
+            floor: this.selectedElement.floor,
+            room: this.selectedElement.room,
+            model_name: this.selectedElement.modelName,
+            family_type: this.selectedElement.familyType,
+          },
+        });
+      }, 1000);
     },
   },
 };
