@@ -109,7 +109,14 @@ export default {
       sharedApp: null,
       sharedViewer: null,
       modelList: [],
-      selectedElement: { id: "", name: "", floor: "", room: "", modelName: "", familyType: "" },
+      selectedElement: {
+        id: "",
+        name: "",
+        floor: "",
+        room: "",
+        modelName: "",
+        familyType: "",
+      },
       elementRecords: [],
       floorData: [],
       allFloorData: [],
@@ -138,8 +145,10 @@ export default {
     // 捕获 BIMface SDK 内部的 dispatchEvent 错误（组件销毁时动画回调导致）
     this._originalOnError = window.onerror;
     window.onerror = (msg) => {
-      if (msg && msg.includes('dispatchEvent')) return true; // 忽略 SDK 内部错误
-      return this._originalOnError ? this._originalOnError.apply(window, arguments) : false;
+      if (msg && msg.includes("dispatchEvent")) return true; // 忽略 SDK 内部错误
+      return this._originalOnError
+        ? this._originalOnError.apply(window, arguments)
+        : false;
     };
 
     if (this.$route.query.model_element_id) {
@@ -214,7 +223,11 @@ export default {
         if (res.code === 200) {
           const noTokenModels = res.data.filter((m) => !m.token);
           if (noTokenModels.length > 0) {
-            this.$message.warning(`${noTokenModels.map(m => m.name).join('、')} 的 ViewToken 为空，已跳过加载`);
+            this.$message.warning(
+              `${noTokenModels
+                .map((m) => m.name)
+                .join("、")} 的 ViewToken 为空，已跳过加载`
+            );
           }
           this.modelList = res.data
             .filter((m) => m.token)
@@ -363,7 +376,6 @@ export default {
       const self = this;
       const viewer = this.sharedViewer;
       if (!viewer) return;
-
       // 窗口大小变化时自适应
       window.onresize = () => {
         viewer.resize(
@@ -450,7 +462,9 @@ export default {
               const matchedModel =
                 self.modelList[modelIndex] ||
                 self.modelList.find((m) => m.loaded);
-              const floorName = floor? floor.name || floor.actualName : "自动识别";
+              const floorName = floor
+                ? floor.name || floor.actualName
+                : "自动识别";
               const room = self.findRoomInFloor(floor, elementId);
               // const roomName = room ? room.name || room.actualName : "未知房间";
               const familyType = self.findFamilyType(floor, elementId);
