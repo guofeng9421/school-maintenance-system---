@@ -19,19 +19,19 @@
         <el-form-item label="维修位置" prop="location">
           <el-input v-model="form.location" placeholder="请输入详细位置，如：教学楼A 301教室" :disabled="!hasComponent" />
         </el-form-item>
-        <el-row :gutter="20">
+        <el-row :gutter="10">
           <el-col :span="8">
             <el-form-item label="楼栋" prop="building">
               <el-input v-model="form.building" placeholder="如：教学楼A" :disabled="!hasComponent" />
             </el-form-item>
           </el-col>
-          <el-col :span="8">
-            <el-form-item label="楼层">
+          <el-col :span="6">
+            <el-form-item label="楼层" prop="building">
               <el-input v-model="form.floor" placeholder="如：3层" :disabled="!hasComponent" />
             </el-form-item>
           </el-col>
-          <el-col :span="8">
-            <el-form-item label="房间号">
+          <el-col :span="10">
+            <el-form-item label="房间号" prop="building">
               <el-input v-model="form.room" placeholder="如：301" :disabled="!hasComponent" />
             </el-form-item>
           </el-col>
@@ -55,7 +55,7 @@
             </el-form-item>
           </el-col>
         </el-row>
-        <el-form-item label="问题描述">
+        <el-form-item label="问题描述" prop="building">
           <el-input v-model="form.description" type="textarea" :rows="4" placeholder="请详细描述问题..." :disabled="!hasComponent" />
         </el-form-item>
 
@@ -216,7 +216,7 @@ export default {
       this.form.model_element_id = query.model_element_id;
       this.form.model_element_name = query.model_element_name;
       this.form.floor = query.floor ? (query.floor.split("-")[1] || query.floor) : "";
-      this.form.room = query.room || "";
+      this.form.room = query.room ? (query.room.substring(query.room.indexOf("-") + 1) || query.room) : "";
       this.form.model_name = query.model_name || "";
       this.form.building = query.model_name.split(".")[0]; // 如果 BIM 页面没有传楼栋信息，则默认使用模型名称
       this.form.location = `${this.form.building} ${this.form.floor} ${this.form.room}`;
