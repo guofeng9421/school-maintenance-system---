@@ -41,7 +41,7 @@
           <el-tabs v-model="activeTab">
             <!-- 构件信息面板：点击构件后显示详情 -->
             <el-tab-pane label="构件信息" name="element">
-              <div v-if="selectedElement.id" class="element-info">
+              <div v-if="selectedElement.id" class="element-info">         
                 <el-descriptions :column="1" border size="small">
                   <el-descriptions-item label="构件ID">{{ selectedElement.id }}</el-descriptions-item>
                   <el-descriptions-item label="构件名称">{{ selectedElement.name }}</el-descriptions-item>
@@ -121,6 +121,7 @@ export default {
       floorData: [],
       allFloorData: [],
       modelFloors: {},
+      clickToken: 0, // 点击序号，用于丢弃过期的异步回调结果
       currentFloorModel: null,
       selectFloorData: "",
       pendingFocusId: null,
@@ -144,10 +145,11 @@ export default {
   async mounted() {
     // 捕获 BIMface SDK 内部的 dispatchEvent 错误（组件销毁时动画回调导致）
     this._originalOnError = window.onerror;
-    window.onerror = (msg) => {
-      if (msg && msg.includes("dispatchEvent")) return true; // 忽略 SDK 内部错误
-      return this._originalOnError
-        ? this._originalOnError.apply(window, arguments)
+    const originalOnError = this._originalOnError;
+    window.onerror = function (msg, url, line, col, error) {
+      if (String(msg).includes("dispatchEvent")) return true; // 忽略 SDK 内部错误
+      return originalOnError
+        ? originalOnError.call(window, msg, url, line, col, error)
         : false;
     };
 
@@ -167,7 +169,10 @@ export default {
     this.activeTimers = [];
 
     // 移除窗口 resize 监听
-    window.onresize = null;
+    if (this._resizeHandler) {
+      window.removeEventListener("resize", this._resizeHandler);
+      this._resizeHandler = null;
+    }
 
     // 先移除事件监听，再销毁 SDK
     try {
@@ -278,6 +283,16 @@ export default {
             const webAppConfig =
               new Glodon.Bimface.Application.WebApplication3DConfig();
             webAppConfig.domElement = container;
+            // 加载时使用「性能模式」（VisualizaionMode: Render / Performance / White）
+            // 性能模式会简化漫反射、色调与阴影，优先保证大模型的流畅度
+            // option.enableCSMShadow 必须显式开启，否则性能模式会连同投影一起关掉
+            webAppConfig.visualization = {
+              active: true,
+              mode: "Performance",
+              option: {
+                enableCSMShadow: true,
+              },
+            };
             self.sharedApp = new Glodon.Bimface.Application.WebApplication3D(
               webAppConfig
             );
@@ -320,8 +335,8 @@ export default {
         this.$set(this.bimViewers, model.id, viewer3D);
         this.showToast("success", `${model.name} 加载成功`);
 
-        // addView 后获取该模型的楼层树并缓存
-        this.fetchModelTreeForModel(model, viewer3D, 0);
+        // addView 后获取该模型的楼层树并缓存（按加入顺序取对应模型，避免 getModel() 默认取第一个模型）
+        this.fetchModelTreeForModel(model, viewer3D, 0, index);
       } catch (e) {
         console.error(`${model.name} addView失败:`, e);
       }
@@ -329,11 +344,13 @@ export default {
     },
 
     // 获取单个模型的楼层树并缓存
-    fetchModelTreeForModel(modelListItem, viewer3D, attempt) {
+    fetchModelTreeForModel(modelListItem, viewer3D, attempt, modelIndex) {
       const self = this;
       if (attempt > 10) return;
       try {
-        const modelData = viewer3D.getModel();
+        const models = viewer3D.getModels ? viewer3D.getModels() : [];
+        const modelData =
+          models[modelIndex] || (modelIndex == null ? viewer3D.getModel() : null);
         if (modelData && modelData.getModelTree) {
           modelData.getModelTree((tree) => {
             // 组件已销毁，不再处理
@@ -349,7 +366,8 @@ export default {
                   self.fetchModelTreeForModel(
                     modelListItem,
                     viewer3D,
-                    attempt + 1
+                    attempt + 1,
+                    modelIndex
                   ),
                 1000
               );
@@ -358,7 +376,12 @@ export default {
         } else {
           self.trackTimeout(
             () =>
-              self.fetchModelTreeForModel(modelListItem, viewer3D, attempt + 1),
+              self.fetchModelTreeForModel(
+                modelListItem,
+                viewer3D,
+                attempt + 1,
+                modelIndex
+              ),
             1000
           );
         }
@@ -376,26 +399,33 @@ export default {
       const self = this;
       const viewer = this.sharedViewer;
       if (!viewer) return;
-      // 窗口大小变化时自适应
-      window.onresize = () => {
-        viewer.resize(
-          document.documentElement.clientWidth,
-          document.documentElement.clientHeight - 40
-        );
+
+      // 窗口大小变化时自适应（按容器实际尺寸，避免画布高度超出容器）
+      this._resizeHandler = () => {
+        const container =
+          this.$refs.bimContainerRef ||
+          document.getElementById("bim-container");
+        if (!container) return;
+        viewer.resize(container.clientWidth, container.clientHeight);
       };
+      window.addEventListener("resize", this._resizeHandler);
 
       // 延迟设置初始视角（等待模型渲染完成），避免先 render 再 setView 导致的闪现缩放
       this.trackTimeout(() => {
         viewer.setView(Glodon.Bimface.Viewer.ViewOption.Home);
+        self.enableAllFillLights();
         viewer.render();
       }, 500);
 
-      // 绑定点击事件：点击构件触发 focusOnObject，点击空白触发 resetFloorVisibility
+      // 绑定点击事件：点击构件触发 focusOnObject，点击空白执行完整重置
+      // 注意：不能用 evt.normal 判断。SDK 只在命中构件时才有 intersectInfo，
+      // 未命中时 normal 为 null，而命中地面/地图等无构件对象时 normal 存在但 objectId 为空。
       this.viewerClickHandler = (evt) => {
-        if (evt.normal !== null) {
+        const hasElement = !!evt && evt.objectId != null && evt.objectId !== "";
+        if (hasElement) {
           self.focusOnObject(evt);
         } else {
-          self.resetFloorVisibility();
+          self.resetFloorSelection();
         }
       };
       viewer.addEventListener(
@@ -411,6 +441,30 @@ export default {
       }
     },
 
+    // 开启全部场景辅助环境光（SDK 默认只开启 5 盏中的 3 盏），提亮模型暗部
+    // 同时显式开启场景辅助方向光的投影（性能模式下默认会被关掉）
+    // 光照管理器在模型渲染初始化后才可用，未就绪时重试
+    enableAllFillLights(attempt = 0) {
+      const viewer = this.sharedViewer;
+      if (!viewer) return;
+      const lightManager = viewer.getLightManager();
+      if (!lightManager) {
+        if (attempt < 20) {
+          this.trackTimeout(() => this.enableAllFillLights(attempt + 1), 500);
+        }
+        return;
+      }
+      lightManager
+        .getAllFillLights()
+        .forEach((light) => light.enableLight(true));
+      const csmLight = lightManager.getCSMLight && lightManager.getCSMLight();
+      if (csmLight) {
+        csmLight.setLightPreset(true);
+        csmLight.enableShadow(true);
+      }
+      lightManager.update();
+    },
+
     // ========================= 构件定位 =========================
 
     // 从维修详情页跳转过来时，自动定位到指定构件
@@ -419,6 +473,8 @@ export default {
       const self = this;
       const viewer = this.sharedViewer;
       if (!viewer || !elementId) return;
+      // 记录本次定位序号，异步回调返回时若已发生新的点击则丢弃结果
+      const token = ++self.clickToken;
 
       const models = viewer.getModels();
       if (!models || models.length === 0) return;
@@ -435,8 +491,8 @@ export default {
 
           // 获取被点击模型的楼层树，回调内执行楼层分离和面板填充
           model.getModelTree((tree) => {
-            // 组件已销毁，不再处理
-            if (!self.sharedViewer) return;
+            // 组件已销毁或已发生新点击，不再处理
+            if (!self.sharedViewer || token !== self.clickToken) return;
             if (tree && tree.length > 0) {
               self.floorData = tree;
               self.currentFloorModel = model;
@@ -601,6 +657,8 @@ export default {
       const { objectId, fileId } = event;
       const viewer = this.sharedViewer;
       if (!viewer) return;
+      // 记录本次点击序号，异步回调返回时若已发生新的点击则丢弃结果
+      const token = ++self.clickToken;
 
       const models = viewer.getModels();
       if (!models || models.length === 0) return;
@@ -610,7 +668,11 @@ export default {
         model.setVisible(String(model.modelId) === targetFileId)
       );
       const model = models.find((m) => String(m.modelId) === targetFileId);
-      if (!model) return;
+      if (!model) {
+        // 取不到对应模型（构件信息不完整）时按点击空白处理，避免模型被全部隐藏后无法恢复
+        self.resetFloorSelection();
+        return;
+      }
 
       // 选中构件并缩放
       const id =
@@ -628,8 +690,8 @@ export default {
 
       // 获取被点击模型的楼层树，回调内执行面板填充
       model.getModelTree((tree) => {
-        // 组件已销毁，不再处理
-        if (!self.sharedViewer) return;
+        // 组件已销毁或已发生新点击，不再处理
+        if (!self.sharedViewer || token !== self.clickToken) return;
         if (tree && tree.length > 0) {
           self.floorData = tree;
           self.currentFloorModel = model;
@@ -643,16 +705,16 @@ export default {
           const matchedModel =
             self.modelList[modelIndex] || self.modelList.find((m) => m.loaded);
           const floorName = floor ? floor.name || floor.actualName : "自动识别";
-          const room = self.findRoomInFloor(floor, objectId);
-          const roomName = room ? room.name || room.actualName : "未知房间";
           const familyType = self.findFamilyType(floor, objectId);
           const familyTypeName = familyType || "";
           const applyElementInfo = (name) => {
+            if (token !== self.clickToken) return;
             self.selectedElement = {
               id: String(objectId),
               name: name || "构件#" + objectId,
               floor: floorName,
               room: familyTypeName,
+              familyType: familyTypeName,
               modelName: matchedModel ? matchedModel.name : "",
             };
             self.fetchElementRecords(self.selectedElement.id);
@@ -674,10 +736,16 @@ export default {
     // 切换楼层：隐藏所有楼层 → 显示选中楼层 → 俯视缩放到该楼层
     handleFloorChange(floorId) {
       const viewer = this.sharedViewer;
-      if (!viewer || !this.floorData || this.floorData.length === 0) return;
+      if (!viewer) return;
+      // 下拉框被清空时恢复全景，避免隐藏所有楼层后模型一片空白
+      if (!floorId) {
+        this.resetFloorVisibility();
+        return;
+      }
+      if (!this.floorData || this.floorData.length === 0) return;
 
-      // 使用当前点击模型对应的 viewer，而非 models[0]
-      const model = this.currentFloorModel || viewer.getModels()[0];
+      // 必须使用当前楼层树所属的模型，避免操作到其他模型
+      const model = this.currentFloorModel;
       if (!model) return;
 
       // 先隐藏所有楼层
@@ -729,6 +797,8 @@ export default {
 
     // 重置楼层选择：清空下拉框数据 + 清空构件信息 + 恢复全景
     resetFloorSelection() {
+      // 作废尚未返回的异步构件信息回调
+      this.clickToken += 1;
       // 先恢复视图，再清空数据
       this.resetFloorVisibility();
       this.selectFloorData = "";
@@ -819,14 +889,14 @@ export default {
           this.elementRecords = res.data;
         }
       } catch (e) {
-        this.$message.error(e);
+        this.showToast("error", "获取关联维修记录失败");
       }
     },
 
     // 跳转到维修页面，传递构件信息
     goCreateRecord() {
       // 等待缩放动画部分完成后再跳转，避免 SDK 内部回调报错
-      setTimeout(() => {
+      this.trackTimeout(() => {
         const from = this.$route.query.from;
         const recordId = this.$route.query.record_id;
         this.$router.push({
@@ -881,6 +951,20 @@ export default {
 
 .floor-select {
   width: 160px;
+}
+
+.loading-overlay {
+  position: absolute;
+  top: 50px;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: rgba(26, 26, 46, 0.55);
 }
 
 .model-placeholder {

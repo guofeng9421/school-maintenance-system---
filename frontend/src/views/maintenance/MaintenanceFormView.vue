@@ -125,7 +125,7 @@ export default {
         handler_name: "",
         assigned_at: "",
         completed_at: "",
-        status: "processing",
+        status: "pending",
         images: [],
       },
       // 表单验证规则
@@ -215,8 +215,12 @@ export default {
     fillComponentFromQuery(query) {
       this.form.model_element_id = query.model_element_id;
       this.form.model_element_name = query.model_element_name;
-      this.form.floor = query.floor ? (query.floor.split("-")[1] || query.floor) : "";
-      this.form.room = query.room ? (query.room.substring(query.room.indexOf("-") + 1) || query.room) : "";
+      this.form.floor = query.floor
+        ? query.floor.split("-")[1] || query.floor
+        : "";
+      this.form.room = query.room
+        ? query.room.substring(query.room.indexOf("-") + 1) || query.room
+        : "";
       this.form.model_name = query.model_name || "";
       this.form.building = query.model_name.split(".")[0]; // 如果 BIM 页面没有传楼栋信息，则默认使用模型名称
       this.form.location = `${this.form.building} ${this.form.floor} ${this.form.room}`;
@@ -237,6 +241,7 @@ export default {
           room: res.data.room,
           category: res.data.category,
           sub_category: res.data.sub_category,
+          status: res.data.status,
           priority: res.data.priority,
           model_element_id: res.data.model_element_id || "",
           model_element_name: res.data.model_element_name || "",
@@ -337,7 +342,7 @@ export default {
             this.$message.error(res.message);
           }
         } catch (e) {
-          this.$message.error(e.message || '操作失败');
+          this.$message.error(e.message || "操作失败");
         } finally {
           this.submitting = false;
         }

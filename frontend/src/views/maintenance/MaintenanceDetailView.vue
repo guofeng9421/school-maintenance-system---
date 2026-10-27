@@ -54,14 +54,14 @@
             <el-steps direction="vertical" :active="activeStep" finish-status="success" style="height: 260px;">
               <el-step title="提交时间" :description="formatDate(record.created_at)" />
               <el-step title="处理中" :description="record.status === 'processing' ? '已分配' : '待处理'" />
-              <el-step title="已完成" :description="record.update_at ? formatDate(record.update_at) : ''" />
+              <el-step title="已完成" :description="record.completed_at ? formatDate(record.completed_at) : ''" />
             </el-steps>
           </el-card>
-          <el-card shadow="never" v-if="record.status === 'processing'">
+          <el-card shadow="never" v-if="record.status === 'pending' || record.status === 'processing'">
             <div slot="header"><span>快速操作</span></div>
             <div style="display:flex;flex-direction:column;gap:8px;">
-              <el-button v-if="record.status === 'pending'" type="warning" @click="changeStatus('processing')">开始处理</el-button>
-              <el-button v-if="record.status === 'processing'" type="success" @click="changeStatus('completed')">标记完成</el-button>
+              <!-- 待处理工单无需「开始处理」，直接标记完成 -->
+              <el-button type="success" @click="changeStatus('completed')">标记完成</el-button>
             </div>
           </el-card>
         </el-col>
@@ -71,10 +71,7 @@
 </template>
 
 <script>
-import {
-  statusMap,
-  statusType,
-} from "@/config/constants";
+import { statusMap, statusType } from "@/config/constants";
 import { formatDate, formatDateOnly } from "@/utils";
 
 export default {
@@ -91,7 +88,7 @@ export default {
         floor: "",
         room: "",
         category: "other",
-        status: "processing",
+        status: "pending",
         reporter_name: "",
         handler_name: "",
         created_at: "",
@@ -101,7 +98,7 @@ export default {
         model_element_id: "",
         model_element_name: "",
         images: [],
-        sub_category:[]
+        sub_category: [],
       },
       statusMap,
       statusType,
@@ -109,12 +106,11 @@ export default {
   },
   computed: {
     activeStep() {
-      const map = {  processing: 2, completed: 3,};
+      const map = { processing: 2, completed: 3 };
       return map[this.record.status] !== undefined
         ? map[this.record.status]
         : 2;
     },
-    
   },
   mounted() {
     this.fetchDetail();
@@ -143,9 +139,19 @@ export default {
         processing: "处理中",
         completed: "已完成",
       };
-      const res = await this.$API.maintenanceApi.update(this.$route.params.id, {
-        status,
-      });
+      const payload = { status };
+      // 标记完成时把当前操作时间写入结束时间（后端只解析 yyyy-MM-dd）
+      if (status === "completed") {
+        const now = new Date();
+        const pad = (v) => ("0" + v).slice(-2);
+        payload.completed_at = `${now.getFullYear()}-${pad(
+          now.getMonth() + 1
+        )}-${pad(now.getDate())}`;
+      }
+      const res = await this.$API.maintenanceApi.update(
+        this.$route.params.id,
+        payload
+      );
       if (res.code === 200) {
         this.$message.success(`已标记为${statusLabel[status]}`);
       }
