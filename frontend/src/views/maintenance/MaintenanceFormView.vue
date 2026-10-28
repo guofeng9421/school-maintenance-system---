@@ -26,12 +26,12 @@
             </el-form-item>
           </el-col>
           <el-col :span="6">
-            <el-form-item label="楼层" prop="building">
+            <el-form-item label="楼层" prop="floor">
               <el-input v-model="form.floor" placeholder="如：3层" :disabled="!hasComponent" />
             </el-form-item>
           </el-col>
           <el-col :span="10">
-            <el-form-item label="房间号" prop="building">
+            <el-form-item label="房间号" prop="room">
               <el-input v-model="form.room" placeholder="如：301" :disabled="!hasComponent" />
             </el-form-item>
           </el-col>
@@ -55,7 +55,7 @@
             </el-form-item>
           </el-col>
         </el-row>
-        <el-form-item label="问题描述" prop="building">
+        <el-form-item label="问题描述" prop="description">
           <el-input v-model="form.description" type="textarea" :rows="4" placeholder="请详细描述问题..." :disabled="!hasComponent" />
         </el-form-item>
 
@@ -135,6 +135,8 @@ export default {
           { required: true, message: "请输入维修位置", trigger: "blur" },
         ],
         building: [{ required: true, message: "请输入楼栋", trigger: "blur" }],
+        floor: [{ required: true, message: "请输入楼层", trigger: "blur" }],
+        room: [{ required: true, message: "请输入房间号", trigger: "blur" }],
         category: [{ required: true, message: "请选择大类", trigger: "blur" }],
         sub_category: [
           { required: true, message: "请选择子类", trigger: "blur" },

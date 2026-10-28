@@ -521,7 +521,7 @@ export default {
               const floorName = floor
                 ? floor.name || floor.actualName
                 : "自动识别";
-              const room = self.findRoomInFloor(floor, elementId);
+              // const room = self.findRoomInFloor(floor, elementId);
               // const roomName = room ? room.name || room.actualName : "未知房间";
               const familyType = self.findFamilyType(floor, elementId);
               const familyTypeName = familyType || "";
