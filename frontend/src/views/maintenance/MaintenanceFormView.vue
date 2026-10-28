@@ -63,7 +63,7 @@
         <el-form-item label="上传现场照片">
           <el-upload action="#" :auto-upload="false" :file-list="fileList" :on-change="handleFileChange" :on-remove="handleFileRemove" accept="image/*" :limit="9" list-type="picture-card" :disabled="!hasComponent">
             <i class="el-icon-plus"></i>
-            <div slot="tip" class="el-upload__tip">最多上传9张图片，单张不超过10MB</div>
+            <div slot="tip" class="el-upload__tip">最多上传9张图片，单张不超过10MB，总计不超过50MB</div>
           </el-upload>
         </el-form-item>
 
@@ -98,6 +98,11 @@
 </template>
 
 <script>
+// 单张图片大小上限：10MB（与上传提示保持一致）
+const MAX_IMAGE_SIZE = 10 * 1024 * 1024;
+// 单次提交全部图片的总大小上限：50MB（对应后端 max-request-size）
+const MAX_TOTAL_SIZE = 50 * 1024 * 1024;
+
 // 新建/编辑维修表单页面
 export default {
   name: "MaintenanceFormView",
@@ -276,8 +281,36 @@ export default {
       }
       this.$router.push({ path: "/bim", query });
     },
-    // 文件选择变更回调：同步更新fileList
+    // 判断新选择的文件是否合规（必须是图片且不超过 10MB）
+    // 已有图片没有 raw 属性，不做校验
+    isValidImageFile(file) {
+      if (!file || !file.raw) return true;
+      return (
+        /^image\//.test(file.raw.type || "") &&
+        file.raw.size <= MAX_IMAGE_SIZE
+      );
+    },
+    // 文件选择变更回调：先校验大小/类型，再把不合规的文件从列表中剔除
     handleFileChange(file, list) {
+      if (!this.isValidImageFile(file)) {
+        const reason = /^image\//.test((file.raw && file.raw.type) || "")
+          ? `图片「${file.name}」超过 10MB，已移除`
+          : `文件「${file.name}」不是图片，已移除`;
+        this.$message.warning(reason);
+        // 剔除刚选中的非法文件（保留其他已选文件）
+        this.fileList = list.filter((f) => f.uid !== file.uid);
+        return;
+      }
+      // 再校验本次上传的总大小（后端单次请求上限 50MB）
+      const totalSize = list.reduce(
+        (sum, f) => sum + ((f.raw && f.raw.size) || 0),
+        0
+      );
+      if (totalSize > MAX_TOTAL_SIZE) {
+        this.$message.warning("本次上传图片总大小超过 50MB，请减少图片数量");
+        this.fileList = list.filter((f) => f.uid !== file.uid);
+        return;
+      }
       this.fileList = list;
     },
     // 文件移除回调：同步更新fileList
@@ -313,13 +346,18 @@ export default {
               const uploadRes = await this.$API.maintenanceApi.uploadImages(
                 formData
               );
-              if (uploadRes.code === 200) {
-                // 合并已有图片URL和新上传的图片URL
-                this.form.images = [
-                  ...(this.form.images || []),
-                  ...uploadRes.data,
-                ];
+              // 上传失败时不能静默跳过，否则会生成一条没有照片的工单
+              if (!uploadRes || uploadRes.code !== 200) {
+                this.$message.error(
+                  (uploadRes && uploadRes.message) || "图片上传失败，请重试"
+                );
+                return;
               }
+              // 合并已有图片URL和新上传的图片URL
+              this.form.images = [
+                ...(this.form.images || []),
+                ...(uploadRes.data || []),
+              ];
             }
           }
           // 提交维修数据（新建或更新）
